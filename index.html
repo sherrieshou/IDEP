@@ -183,6 +183,37 @@
     .prose { grid-column: 3 / span 7; min-width: 0; }
     .prose > p:first-child { margin-top: 0; }
     .prose p { margin: 0 0 1.25em; font-size: 1.03rem; }
+    .prose a {
+      color: inherit;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    .prose ul, .prose ol { margin: 0 0 1.6rem; padding-left: 1.3rem; }
+    .prose li { margin: .45rem 0; }
+    .formula {
+      margin: .8rem 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      background: rgba(233, 231, 245, .48);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .86rem;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+    .resource-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 1rem 0 2rem;
+    }
+    .resource-links a {
+      padding: 7px 12px;
+      border: 1px solid var(--ink);
+      text-decoration: none;
+      font-size: .76rem;
+      font-weight: 700;
+    }
+    .resource-links a:hover { background: var(--lavender); }
     .prose h2 {
       margin: 4.7rem 0 2.2rem;
       padding-top: 1rem;
@@ -192,6 +223,7 @@
       letter-spacing: -.045em;
     }
     .prose h2:first-of-type { margin-top: 2rem; }
+    #panel-3 .prose h2:first-of-type { padding-top: 0; border-top: 0; }
     .prose h3 {
       margin: 3rem 0 1rem;
       font-size: clamp(1.2rem, 1.8vw, 1.55rem);
@@ -216,6 +248,171 @@
     }
     .definition dt { font-weight: 700; }
     .definition dd { margin: 0; }
+
+    .judgment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 1.5rem 0 2rem;
+    }
+    .judgment-box {
+      min-height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      border: 1px solid var(--ink);
+      background: var(--lavender);
+      color: #66645f;
+      text-align: center;
+      font-size: .82rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .network-figure {
+      margin: 3.5rem 0 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--ink);
+    }
+    .network-figure svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin-top: 1.4rem;
+    }
+    .network-figure figcaption {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    .figure-takeaway {
+      margin: 1.8rem 0 0;
+      padding: 22px 24px;
+      border-left: 3px solid #9b98b5;
+      background: var(--lavender);
+      color: #66645f;
+      font-size: 1.05rem;
+      font-weight: 650;
+      line-height: 1.55;
+    }
+    .network-title { font-size: 28px; font-weight: 650; letter-spacing: -.03em; fill: var(--ink); }
+    .network-node { fill: var(--lavender); stroke: var(--ink); stroke-width: 1.5; }
+    .network-note { fill: rgba(245, 223, 218, .58); stroke: var(--line); stroke-width: 1; }
+    .network-path { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+    .network-guide { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 5 6; }
+    .network-node-text { fill: var(--ink); font-size: 17px; font-weight: 650; text-anchor: middle; }
+    .network-note-text { fill: #66645f; font-size: 13px; text-anchor: middle; }
+    .network-path-label { fill: var(--muted); font-size: 12px; letter-spacing: .02em; text-anchor: middle; }
+
+    .researcher-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 2rem 0 2.4rem;
+    }
+
+    .researcher-card {
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      border: 1px solid var(--ink);
+      background: rgba(255, 255, 255, .16);
+    }
+
+    .researcher-card h4 {
+      margin: 0 0 28px;
+      font-size: .78rem;
+      line-height: 1.25;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .researcher-card p {
+      margin: 0;
+      color: #96948f;
+      font-size: .92rem;
+      line-height: 1.55;
+    }
+
+    .card-emphasis {
+      color: #66645f;
+      font-weight: 700;
+    }
+
+    .evaluation-stack {
+      display: grid;
+      gap: 10px;
+      margin: 2rem 0 2.4rem;
+    }
+
+    .evaluation-level {
+      display: grid;
+      grid-template-columns: 138px minmax(0, 1fr);
+      min-height: 118px;
+      border: 1px solid var(--ink);
+    }
+
+    .level-label {
+      display: flex;
+      align-items: center;
+      padding: 18px;
+      border-right: 1px solid var(--ink);
+      background: var(--lavender);
+      font-size: .76rem;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .level-copy {
+      display: flex;
+      align-items: center;
+      padding: 20px 22px;
+      color: #777570;
+      font-size: .95rem;
+      line-height: 1.6;
+    }
+
+    .level-content { width: 100%; }
+
+    .level-content ul {
+      margin: 0 0 14px;
+      padding-left: 1.15rem;
+    }
+
+    .level-content li { margin: 3px 0; }
+
+    .level-takeaway {
+      margin: 0;
+      color: #66645f;
+      font-weight: 700;
+    }
+
+    .evaluation-definitions ul {
+      margin: 0 0 12px;
+      padding-left: 1.15rem;
+    }
+
+    .evaluation-definitions li { margin: 3px 0; }
+
+    .minor-label {
+      margin: 2.6rem 0 .6rem !important;
+      color: var(--muted);
+      font-size: .72rem !important;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .grid-transition {
+      margin: 2.8rem 0 1.4rem !important;
+      color: #66645f;
+      font-weight: 600;
+    }
 
     .side-note {
       grid-column: 11 / -1;
@@ -317,6 +514,11 @@
       .prose p { font-size: 1rem; }
       .side-note { position: static; margin: 42px 0 0; }
       .definition { grid-template-columns: 1fr; gap: 5px; }
+      .researcher-grid { grid-template-columns: 1fr; }
+      .judgment-grid { grid-template-columns: 1fr; }
+      .researcher-card { min-height: 0; }
+      .evaluation-level { grid-template-columns: 1fr; }
+      .level-label { border-right: 0; border-bottom: 1px solid var(--ink); }
       .bridge { grid-template-columns: 1fr; gap: 12px; }
       .bridge-node:nth-child(1) { width: 140px; justify-self: center; }
       .bridge-node:nth-child(5) { min-height: 150px; width: 150px; justify-self: center; }
@@ -342,29 +544,151 @@
 
     <section class="panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1" hidden>
       <header class="article-head">
-        <p class="eyebrow">Blog 01 / Study Archive</p>
-        <h1 class="article-title">Previous<br />Study</h1>
-        <p class="article-deck">A record of the questions, references, and early assumptions that shaped the project.</p>
+        <p class="eyebrow">Blog 01 / Initial Direction</p>
+        <h1 class="article-title">Michelins for AI<br />Benchmark Research</h1>
+        <p class="article-deck">An early proposal for making AI evaluation research more visible, interpretable, and useful to industry.</p>
         <div class="article-mark" aria-hidden="true">01</div>
       </header>
       <div class="article-body">
-        <aside class="toc"><p class="toc-title">Contents</p><a href="#">Context</a><a href="#">Evidence</a><a href="#">Takeaway</a></aside>
-        <article class="prose"><div class="placeholder"><div class="placeholder-inner"><div class="placeholder-shape"></div><h2>Content ready to add</h2><p>This tab already uses the shared editorial grid. Replace this block with the Previous Study text when it is ready.</p></div></div></article>
-        <aside class="side-note"><p class="note-title">Document status</p><p>Layout established.</p><p>Research copy pending.</p></aside>
+        <aside class="toc" aria-label="Article contents">
+          <p class="toc-title">Contents</p>
+          <a href="#michelin-model">1. The Model</a>
+          <a href="#research-gap">2. The Gap</a>
+          <a href="#evaluation-ecosystem">3. The Ecosystem</a>
+        </aside>
+        <article class="prose">
+          <h2 id="michelin-model"><span class="section-en">1. The Model</span><span class="section-cn">From promotion to trusted evaluation</span></h2>
+          <p>The first Michelin Guide was published in France in 1900. It listed maps, petrol stations, and other resources intended to encourage motorists to travel farther, wear out their tires, and purchase more.</p>
+          <p>Over time, the guide developed into a credible restaurant rating system. Anonymous inspectors paid for their own meals and produced independent assessments. What began as marketing became trusted evaluation infrastructure.</p>
+
+          <h2 id="research-gap"><span class="section-en">2. The Gap</span><span class="section-cn">Why AI research struggles to travel</span></h2>
+          <p>AI research and industry lack a comparable system for discovering, interpreting, and validating evaluation methods. New benchmark and data-pipeline research appears faster than most people can meaningfully assess it.</p>
+          <dl class="definition-list">
+            <div class="definition"><dt>Visibility</dt><dd>Independent research is difficult to discover unless it is continuously maintained, promoted, or associated with a well-known lab.</dd></div>
+            <div class="definition"><dt>Adoption</dt><dd>Industry teams rarely have enough time to follow every paper or determine which methods matter in their own application context.</dd></div>
+            <div class="definition"><dt>Interpretation</dt><dd>Benchmark scores describe performance numerically, but many people cannot see what a model can actually do through those numbers alone.</dd></div>
+          </dl>
+          <p>The result is a visibility gap: research with strong institutional reach receives attention, while other useful methods remain difficult to find and evaluate.</p>
+
+          <h2 id="evaluation-ecosystem"><span class="section-en">3. The Ecosystem</span><span class="section-cn">Making capability evaluation experiential</span></h2>
+          <p>What if evaluating a model were as accessible as playing a game on Steam? Users could interact with capabilities directly, compare how models behave, and discuss the differences through visible evidence.</p>
+          <p>Expert “inspectors” could then test whether a capability creates value inside a real application. Their extended reviews would document the model, evaluation method, use context, and observed outcome.</p>
+          <p>This evidence could help industry select models, help users understand capabilities, and give researchers feedback about what deserves further development. Together, these exchanges could form a healthier loop between <strong class="card-emphasis">research, users, and industry.</strong></p>
+          <figure class="network-figure" aria-labelledby="network-effect-title network-effect-caption">
+            <svg viewBox="0 0 900 570" role="img" aria-labelledby="network-effect-title network-effect-desc">
+              <title id="network-effect-title">The Network Effect</title>
+              <desc id="network-effect-desc">A circular relationship connects independent researchers, users, and industry. Researchers publish testable capabilities, users generate interaction evidence, and industry adoption returns recognition and feedback to researchers.</desc>
+              <defs>
+                <marker id="network-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#252525"></path>
+                </marker>
+              </defs>
+
+              <text class="network-title" x="450" y="46" text-anchor="middle">The Network Effect</text>
+
+              <path class="network-path" d="M 255 374 C 220 260, 280 164, 382 150" marker-end="url(#network-arrow)"></path>
+              <path class="network-path" d="M 518 150 C 626 166, 687 258, 645 374" marker-end="url(#network-arrow)"></path>
+              <path class="network-path" d="M 570 430 C 490 505, 408 505, 330 430" marker-end="url(#network-arrow)"></path>
+
+              <text class="network-path-label" x="272" y="235">publish testable capabilities</text>
+              <text class="network-path-label" x="634" y="235">generate interaction evidence</text>
+              <text class="network-path-label" x="450" y="505">adoption, recognition, and feedback</text>
+
+              <rect class="network-node" x="382" y="104" width="136" height="96" rx="2"></rect>
+              <text class="network-node-text" x="450" y="145"><tspan x="450" dy="0">Users</tspan><tspan x="450" dy="23">&amp; Evaluators</tspan></text>
+
+              <rect class="network-node" x="172" y="374" width="158" height="106" rx="2"></rect>
+              <text class="network-node-text" x="251" y="417"><tspan x="251" dy="0">Independent</tspan><tspan x="251" dy="23">Researchers</tspan></text>
+
+              <rect class="network-node" x="570" y="374" width="158" height="106" rx="2"></rect>
+              <text class="network-node-text" x="649" y="438">Industry</text>
+
+              <path class="network-guide" d="M 450 200 L 450 250"></path>
+              <rect class="network-note" x="340" y="250" width="220" height="70" rx="2"></rect>
+              <text class="network-note-text" x="450" y="280"><tspan x="450" dy="0">Visible, interactive experiences</tspan><tspan x="450" dy="20">make capabilities understandable.</tspan></text>
+
+              <path class="network-guide" d="M 172 427 L 112 427"></path>
+              <rect class="network-note" x="8" y="377" width="104" height="100" rx="2"></rect>
+              <text class="network-note-text" x="60" y="412"><tspan x="60" dy="0">Research gains</tspan><tspan x="60" dy="19">recognition</tspan><tspan x="60" dy="19">through use.</tspan></text>
+
+              <path class="network-guide" d="M 728 427 L 788 427"></path>
+              <rect class="network-note" x="788" y="377" width="104" height="100" rx="2"></rect>
+              <text class="network-note-text" x="840" y="403"><tspan x="840" dy="0">Industry sees</tspan><tspan x="840" dy="19">value through</tspan><tspan x="840" dy="19">real-world</tspan><tspan x="840" dy="19">evidence.</tspan></text>
+            </svg>
+            <figcaption id="network-effect-caption">Each participant produces evidence that increases the value of the network for the others.</figcaption>
+          </figure>
+          <p class="figure-takeaway">Most companies currently evaluate the foundation model. What matters increasingly, however, is the architecture and systems surrounding task execution. We may need benchmarks that evaluate these systems as a whole.</p>
+        </article>
+        <aside class="side-note"><p class="note-title">Initial hypothesis</p><p>AI evaluation becomes more useful when abstract scores are paired with interactive evidence and credible expert review.</p></aside>
       </div>
     </section>
 
     <section class="panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
       <header class="article-head">
-        <p class="eyebrow">Blog 02 / Market View</p>
-        <h1 class="article-title">Competitive<br />Analysis</h1>
-        <p class="article-deck">A structured view of adjacent products, research platforms, and gaps in the current landscape.</p>
+        <p class="eyebrow">Blog 02 / Case Study</p>
+        <h1 class="article-title">Arena.ai<br />Competitive Analysis</h1>
+        <p class="article-deck">How a research tool for pairwise model comparison became evaluation infrastructure for the AI industry.</p>
         <div class="article-mark" aria-hidden="true">02</div>
       </header>
       <div class="article-body">
-        <aside class="toc"><p class="toc-title">Contents</p><a href="#">Landscape</a><a href="#">Comparison</a><a href="#">Opportunity</a></aside>
-        <article class="prose"><div class="placeholder"><div class="placeholder-inner"><div class="placeholder-shape" style="border-radius:50%"></div><h2>Content ready to add</h2><p>The comparison template will keep the same column logic, typography, and section rhythm as the other essays.</p></div></div></article>
-        <aside class="side-note"><p class="note-title">Document status</p><p>Layout established.</p><p>Analysis copy pending.</p></aside>
+        <aside class="toc" aria-label="Article contents">
+          <p class="toc-title">Contents</p>
+          <a href="#arena-origin">1. Origin</a>
+          <a href="#arena-system">2. Ranking System</a>
+          <a href="#arena-hard">3. Arena-Hard</a>
+        </aside>
+        <article class="prose">
+          <h2 id="arena-origin"><span class="section-en">1. Origin</span><span class="section-cn">From Vicuna evaluation to an open arena</span></h2>
+          <div class="resource-links"><a href="https://arena.ai/blog" target="_blank" rel="noopener noreferrer">Arena Blog ↗</a></div>
+          <p>Arena began as a response to a credibility problem. The team trained Vicuna-13B by fine-tuning LLaMA on 70,000 user-shared conversations collected through ShareGPT and built FastChat as an open-source toolkit for training and evaluating chat models.</p>
+          <p>Early evaluation relied on GPT-4 as a judge, but a single automated score was not persuasive enough to establish that Vicuna performed better. Arena introduced direct, pairwise model comparisons based on human votes.</p>
+
+          <h3>Why It Gained Traction</h3>
+          <ul>
+            <li>Competition among proprietary and open-source models was intense, and many early voters were developers.</li>
+            <li>Users could access GPT-4, Claude, and PaLM 2 for free inside the arena.</li>
+            <li>The team published an updated leaderboard every two weeks.</li>
+            <li>The MT-Bench paper gave the evaluation method research visibility.</li>
+            <li>Open datasets made the system useful beyond the product itself.</li>
+          </ul>
+
+          <h2 id="arena-system"><span class="section-en">2. Ranking System</span><span class="section-cn">From sequential ratings to fitted preferences</span></h2>
+          <h3>Elo</h3>
+          <p>Arena initially used Elo because it was familiar and had already appeared in Anthropic’s LLM research.</p>
+          <div class="formula">E<sub>A</sub> = 1 / (1 + 10<sup>((R<sub>B</sub> − R<sub>A</sub>) / 400)</sup>)</div>
+          <div class="formula">R<sub>A</sub>′ = R<sub>A</sub> + K · (S<sub>A</sub> − E<sub>A</sub>)</div>
+          <p>Elo updates ratings one comparison at a time, so results depend on vote order and the selected K value. That behavior makes sense for chess players whose skill changes, but models remain fixed during evaluation.</p>
+
+          <h3>Bradley–Terry</h3>
+          <div class="formula">P(A beats B) = 1 / (1 + e<sup>(ξ<sub>B</sub> − ξ<sub>A</sub>)</sup>)</div>
+          <ul>
+            <li>Each model receives one fitted strength value, ξ.</li>
+            <li>All votes are fitted together through logistic regression.</li>
+            <li>Each battle becomes one row, with +1 for model A and −1 for model B.</li>
+            <li>A tie counts as half a win and half a loss.</li>
+            <li>The fitted strength is rescaled to resemble Elo: 400 points per tenfold change in odds, making a 100-point difference roughly equivalent to a 64% win probability.</li>
+          </ul>
+
+          <h3>Potential Upgrades</h3>
+          <dl class="definition-list">
+            <div class="definition"><dt>Davidson / Rao–Kupper</dt><dd>Model ties directly instead of converting them into partial wins and losses.</dd></div>
+            <div class="definition"><dt>Crowd-BT</dt><dd>Weight voters according to their estimated reliability.</dd></div>
+            <div class="definition"><dt>Prompt-to-Leaderboard</dt><dd>Estimate model rankings conditionally for different kinds of prompts.</dd></div>
+            <div class="definition"><dt>Mixture Models</dt><dd>Represent different user preferences instead of forcing every vote into one shared ranking.</dd></div>
+          </dl>
+
+          <h2 id="arena-hard"><span class="section-en">3. Arena-Hard</span><span class="section-cn">Criteria for a stronger benchmark</span></h2>
+          <div class="resource-links">
+            <a href="https://arena.ai/blog/arena-hard" target="_blank" rel="noopener noreferrer">Arena-Hard Blog ↗</a>
+            <a href="https://github.com/lmarena/arena-hard-auto" target="_blank" rel="noopener noreferrer">GitHub Repository ↗</a>
+          </div>
+          <dl class="definition-list">
+            <div class="definition"><dt>Human Agreement</dt><dd>Scores should correlate with human preferences in real-world use cases.</dd></div>
+            <div class="definition"><dt>Separability</dt><dd>Scores should include confidence intervals and distinguish models with high confidence.</dd></div>
+            <div class="definition"><dt>Freshness</dt><dd>Prompts should be new and unseen to reduce test leakage.</dd></div>
+          </dl>
+        </article>
+        <aside class="side-note"><p class="note-title">Case-study focus</p><p>Origin</p><p>Ranking design</p><p>Industry recognition</p></aside>
       </div>
     </section>
 
@@ -379,79 +703,79 @@
       <div class="article-body">
         <aside class="toc" aria-label="Article contents">
           <p class="toc-title">Contents</p>
-          <a href="#defining">1. Defining the Phenomenon</a>
-          <a href="#reframing">2. Reframing the Phenomenon</a>
-          <a href="#situating">3. Situating the Phenomenon</a>
+          <a href="#defining">1. Define</a>
+          <a href="#reframing">2. Reframe</a>
+          <a href="#situating">3. Ground</a>
         </aside>
 
         <article class="prose">
-          <p>Over the past few months, we interviewed researchers working across AI creativity, open-ended exploration, human–AI co-creation, and agent evaluation. We began with a question that seemed straightforward: how should we evaluate creativity in AI agents?</p>
-          <p>The more conversations we had, the clearer it became that creativity is not a single capability that can be measured outside of context.</p>
-
-          <h2 id="defining"><span class="section-en">1. Defining the Phenomenon</span><span class="section-cn">What the interviews revealed</span></h2>
-          <h3>1.1 Comparing the Definitions</h3>
-          <p>We initially assumed that disagreements about AI creativity came mainly from differences in measurement. The interviews showed us that researchers were often studying different objects from the start.</p>
-          <p>In Cheng Qian’s EscapeBench and CreativityBench, creativity is closer to unconventional but effective tool use: can an agent discover a solution that was not directly suggested within a constrained action space?</p>
-          <p>Antonios Liapis’s work showed us why creativity in human–AI co-creation cannot be reduced to a final artifact. An AI suggestion may never be adopted directly, yet still change how a designer understands the problem and lead to a new direction later. Creativity can therefore live in interaction, selection, and shifts in direction.</p>
-          <p>Vijeta Deshpande places different creativity tasks within a unified evaluation framework to test whether they reflect a shared model capability. She found strong relationships between model performance across tasks, but this general capability still cannot explain why a result matters within a particular professional context.</p>
-          <p>When researchers discuss creativity, they may be referring to outputs, strategies, exploration processes, human–AI interaction, or cross-task capability. These concepts overlap, but they are not the same object of measurement.</p>
-
-          <h3>1.2 Comparing the Evaluations</h3>
-          <p>Researchers not only define creativity differently; they also observe it at different levels.</p>
-          <p>The first level evaluates outcomes: did the agent complete the task, is the work novel and useful, and did the model achieve a higher benchmark score? Outcomes are easy to compare, but they reveal little about how a solution emerged.</p>
-          <p>The second level evaluates observable behavior: which tools did the agent use, what strategy did it follow, and did it meaningfully depart from the common path? This is closer to the “different solutions” we care about, but it can still mistake random behavior for exploration.</p>
-          <p>The third level evaluates process: which directions did the agent try, how did it respond to failure, and what caused it to change strategy? In human–AI co-creation, this also includes how a suggestion was adopted, transformed, or indirectly influenced the creator’s thinking.</p>
+          <h2 id="defining"><span class="section-en">1. Define</span><span class="section-cn">What the interviews revealed</span></h2>
+          <h3>What Researchers Mean and Measure</h3>
+          <p>The interviews revealed that AI creativity research often examines different objects.</p>
+          <div class="researcher-grid" aria-label="Three perspectives on creativity">
+            <section class="researcher-card">
+              <h4>Cheng Qian</h4>
+              <p>In EscapeBench and CreativityBench, <strong class="card-emphasis">creativity appears as unconventional but effective tool use</strong> within a constrained action space.</p>
+            </section>
+            <section class="researcher-card">
+              <h4>Antonios Liapis</h4>
+              <p>Creativity cannot be reduced to a final artifact. <strong class="card-emphasis">It emerges through interaction, selection, and shifts in direction.</strong></p>
+            </section>
+            <section class="researcher-card">
+              <h4>Vijeta Deshpande</h4>
+              <p>A shared capability appears across creativity tasks, but <strong class="card-emphasis">it cannot explain why an output matters in a specific context.</strong></p>
+            </section>
+          </div>
+          <p class="grid-transition">These different definitions also lead researchers to evaluate creativity at different levels.</p>
+          <dl class="definition-list evaluation-definitions" aria-label="Three levels of creativity evaluation">
+            <div class="definition">
+              <dt>Outcome Level</dt>
+              <dd>
+                <ul><li>Task completion</li><li>Novelty and usefulness</li></ul>
+                <p class="level-takeaway">Easy to compare; weak at explaining how a solution emerged.</p>
+              </dd>
+            </div>
+            <div class="definition">
+              <dt>Behavior Level</dt>
+              <dd>
+                <ul><li>Tools used</li><li>Strategy selected</li></ul>
+                <p class="level-takeaway">Reveals meaningful difference, but may mistake randomness for exploration.</p>
+              </dd>
+            </div>
+            <div class="definition">
+              <dt>Process Level</dt>
+              <dd>
+                <ul><li>Departure from the common path</li><li>Response to failure</li><li>Triggers for strategy shifts</li></ul>
+                <p class="level-takeaway">Shows how ideas evolve and influence later decisions.</p>
+              </dd>
+            </div>
+          </dl>
           <p>These levels answer three different questions: what result was produced, what method was used, and how that method was discovered.</p>
 
-          <h3>1.3 Identifying the Limitations</h3>
-          <p>Despite their different objects and methods, the interviews repeatedly surfaced two limitations.</p>
-          <p>First, benchmarks struggle to maintain a stable connection to real use. A general score can rank models, but it may not tell a product team who the model helps, what task it improves, or how it changes human judgment. Rapid model development also leaves benchmarks vulnerable to becoming outdated, under-maintained, or overlooked by industry.</p>
-          <p>Second, evaluating only the final result loses the delayed value of exploration. An action that does not immediately improve success may reveal a new object property, spatial relationship, or causal clue that later becomes a critical stepping stone.</p>
-          <p>These limitations suggest that we need more than a better abstract metric. We need a bounded world in which feasibility, difference, and value can be observed.</p>
-
-          <h2 id="reframing"><span class="section-en">2. Reframing the Phenomenon</span><span class="section-cn">What we chose to preserve</span></h2>
-          <h3>2.1 Preserving the Evidence</h3>
+          <h2 id="reframing"><span class="section-en">2. Reframe</span><span class="section-cn">What we chose to preserve</span></h2>
+          <h3>What We Keep</h3>
           <p>Moving away from a universal creativity score does not mean discarding the earlier research. The interviews helped us preserve three forms of evidence that can travel across domains:</p>
           <dl class="definition-list">
             <div class="definition"><dt>Outcome</dt><dd>Whether the agent solved the problem and whether the result was effective and reproducible.</dd></div>
-            <div class="definition"><dt>Behavior</dt><dd>Which strategy the agent used and whether it truly differed from the common solution rather than merely changing action order or adding random variation.</dd></div>
             <div class="definition"><dt>Process</dt><dd>How the agent explored, failed, gathered information, and changed direction—and whether an early attempt became valuable later.</dd></div>
+            <div class="definition"><dt>Strategy</dt><dd>Which approach the agent ultimately used and whether it truly differed from the common solution.</dd></div>
           </dl>
-          <p>Together, these forms of evidence describe whether the task was completed, whether the method was different, and how the new method emerged.</p>
-
-          <h3>2.2 Separating the Judgments</h3>
+          <p class="minor-label">Three judgments</p>
           <p>Using this evidence, we can replace the broad judgment “Is this behavior creative?” with three more specific judgments:</p>
-          <dl class="definition-list">
-            <div class="definition"><dt>Feasible</dt><dd>Does the solution respect spatial, object, and task constraints, and can it actually be executed in the environment?</dd></div>
-            <div class="definition"><dt>Different</dt><dd>Does the solution change the tools, action relationships, or strategic logic rather than offering only a surface variation?</dd></div>
-            <div class="definition"><dt>Valuable</dt><dd>Does the difference complete the task, open a new reachable state, or create a strategy that can transfer?</dd></div>
-          </dl>
-          <p>We care about the intersection: a solution that was not explicitly anticipated, yet remains workable and produces value.</p>
-
-          <h3>2.3 Reformulating the Question</h3>
-          <p>With this understanding, “How should we evaluate creativity in AI agents?” no longer works as our starting point. It assumes that creativity is a stable property that can be isolated and measured within a model, which repeatedly pulls the discussion back toward definitions.</p>
-          <p>We now ask: can an agent discover a way to solve a problem that was not explicitly anticipated, yet is feasible, different, and valuable?</p>
-          <p>The project therefore moves from general, cross-domain creativity evaluation toward strategy discovery within a specific environment.</p>
-
-          <div class="bridge" aria-label="Research direction transition">
-            <div class="bridge-node">Creativity<br />evaluation</div><div class="bridge-line"></div>
-            <div class="bridge-node">Environment-based<br />evidence</div><div class="bridge-line"></div>
-            <div class="bridge-node">Strategy<br />discovery</div>
+          <div class="judgment-grid" aria-label="Three judgments">
+            <div class="judgment-box">Environmental Constraints</div>
+            <div class="judgment-box">Strategic Logic</div>
+            <div class="judgment-box">Long-term Feedback Value</div>
           </div>
+          <p>We care about strategies that work within the environment, differ in their underlying logic, and create value over time.</p>
 
-          <h2 id="situating"><span class="section-en">3. Situating the Phenomenon</span><span class="section-cn">Why the next setting is three-dimensional</span></h2>
-          <h3>3.1 Introducing the Bridge</h3>
-          <p>Qiancheng’s research provides a key bridge for this transition.</p>
-          <p>In EscapeBench, an agent uses available objects and actions to complete escape-room-like tasks inside a constrained environment. The evaluation asks whether the agent ultimately reaches the goal without prescribing the correct intermediate action, preserving an objective outcome while allowing multiple solution paths.</p>
-          <p>CreativityBench extends this idea by focusing on unconventional object use. Rather than deciding in advance whether the agent “has creativity,” researchers can observe whether it discovers an unusual but effective use of a tool.</p>
-          <p>This design sits between a closed benchmark and a completely open creative task: it combines a clear goal with an open solution space. Qiancheng’s work demonstrates an important path—rather than assigning creativity a score directly, construct an environment in which relevant behaviors can emerge and leave verifiable consequences.</p>
+          <h2 id="situating"><span class="section-en">3. Ground</span></h2>
+          <h3>From EscapeBench to 3D Simulation</h3>
+          <p>Qiancheng’s research provides a key bridge. In EscapeBench, an agent completes escape-room-like tasks using available objects and actions. Success remains objectively verifiable, but the correct intermediate steps are not prescribed.</p>
+          <p>CreativityBench extends this idea to unconventional object use. Together, the benchmarks combine a clear goal with an open solution space where behavior leaves verifiable consequences.</p>
+          <p>In 3D simulation, agents act through spatial relationships and environmental feedback. Researchers can replay complete trajectories and systematically vary the world.</p>
+          <p>These variations make transfer testable. Qiancheng’s work asks whether an agent can find an unconventional but effective solution; 3D simulation lets us ask how that solution emerged and whether it transfers.</p>
 
-          <h3>3.2 Extending the Environment</h3>
-          <p>Extending this approach into 3D simulation gives us richer behavioral evidence within explicit constraints.</p>
-          <p>An agent must understand spatial relationships, move and combine objects, test assumptions about their functions, and adjust its strategy using environmental feedback. Complete trajectories can be recorded and replayed, while layouts, object properties, and task conditions can be systematically changed.</p>
-          <p>We can therefore observe not only whether an agent finishes the task, but whether it discovers new tool combinations, updates its behavior after failure, or repeatedly converges on the same path as other agents.</p>
-          <p>3D simulation also supports transfer evaluation. By changing spatial structure or surface features while preserving deeper causal relationships, we can test whether an agent is mechanically replaying actions or has learned a principle that transfers.</p>
-          <p>Qiancheng’s research helps us ask whether an agent can find an unconventional but effective solution. 3D simulation lets us continue: how did that solution emerge, and can the underlying strategy transfer?</p>
         </article>
 
       </div>
@@ -459,15 +783,55 @@
 
     <section class="panel" id="panel-4" role="tabpanel" aria-labelledby="tab-4" hidden>
       <header class="article-head">
-        <p class="eyebrow">Blog 04 / New Direction</p>
-        <h1 class="article-title">Current<br />Idea</h1>
-        <p class="article-deck">The emerging research direction: agent strategy discovery inside interactive 3D environments.</p>
+        <p class="eyebrow">Blog 04 / Current Direction</p>
+        <h1 class="article-title">Simulation in<br />3D Worlds</h1>
+        <p class="article-deck">Two possible directions for testing coordination, strategy, and physical task execution in simulated environments.</p>
         <div class="article-mark" aria-hidden="true">04</div>
       </header>
       <div class="article-body">
-        <aside class="toc"><p class="toc-title">Contents</p><a href="#">Question</a><a href="#">Environment</a><a href="#">Evaluation</a></aside>
-        <article class="prose"><div class="placeholder"><div class="placeholder-inner"><div class="placeholder-shape" style="clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;background:var(--pink)"></div><h2>Content ready to add</h2><p>This article will use the same framework to document the current 3D agent simulation idea as it develops.</p></div></div></article>
-        <aside class="side-note"><p class="note-title">Document status</p><p>Direction introduced in Blog 03.</p><p>Full proposal pending.</p></aside>
+        <aside class="toc" aria-label="Article contents">
+          <p class="toc-title">Contents</p>
+          <a href="#simulation-scope">1. Distinguish</a>
+          <a href="#orchestration-direction">2. Orchestrate</a>
+          <a href="#physical-direction">3. Embody</a>
+        </aside>
+        <article class="prose">
+          <h2 id="simulation-scope"><span class="section-en">1. Distinguish</span><span class="section-cn">Behavioral worlds and physical worlds</span></h2>
+          <p>Simulating agent-to-agent communication in a three-dimensional setting is different from placing agents inside a world governed by physical properties.</p>
+          <dl class="definition-list">
+            <div class="definition"><dt>Behavioral Simulation</dt><dd>Models how people or agents communicate, coordinate, and make decisions inside a spatial context.</dd></div>
+            <div class="definition"><dt>Physical Simulation</dt><dd>Models movement, object interaction, spatial constraints, and embodied task execution, as required in robotics.</dd></div>
+          </dl>
+          <p>The first predicts behavior. The second tests whether an agent can act successfully in a world with physical consequences. Our next decision is which of these systems creates a meaningful and testable form of enterprise value.</p>
+
+          <h3>The Simile Reference</h3>
+          <p>Simile applies behavioral prediction to retail and merchandising contexts, including work associated with CVS. Its direction moved away from a persistent 3D environment and toward collecting richer human-behavior data through interviews.</p>
+          <p>This raises a central question: <strong class="card-emphasis">when does representing behavior in 3D add value that cannot be produced through interviews, spreadsheets, or conventional simulation?</strong></p>
+
+          <h2 id="orchestration-direction"><span class="section-en">2. Orchestrate</span><span class="section-cn">Simulate high-stakes collective execution</span></h2>
+          <p>One direction is large-scale orchestration: using simulation to compare plans before many people must execute them under time pressure.</p>
+          <div class="judgment-grid" aria-label="Orchestration criteria">
+            <div class="judgment-box">Many People</div>
+            <div class="judgment-box">Short Execution Window</div>
+            <div class="judgment-box">High Cost of Failure</div>
+          </div>
+          <dl class="definition-list">
+            <div class="definition"><dt>Retail</dt><dd>Coordinate merchandising, staffing, customer flow, and operational changes across a store.</dd></div>
+            <div class="definition"><dt>Plant Turnaround</dt><dd>Plan maintenance logistics when a refinery or industrial plant must stop, service equipment, and restart quickly.</dd></div>
+            <div class="definition"><dt>Hospital Move Day</dt><dd>Coordinate staff, patients, equipment, routes, and dependencies during a facility transition.</dd></div>
+            <div class="definition"><dt>Architecture Planning</dt><dd>Test how layouts influence movement, collaboration, congestion, and use before construction or reconfiguration.</dd></div>
+          </dl>
+
+          <h2 id="physical-direction"><span class="section-en">3. Embody</span><span class="section-cn">Test action under physical constraints</span></h2>
+          <p>A second direction is to simulate physical environments and evaluate how agents manipulate objects, navigate constraints, and discover effective strategies.</p>
+          <dl class="definition-list">
+            <div class="definition"><dt>Generated Homes</dt><dd>Create diverse 3D domestic environments for training and evaluating robots on household tasks.</dd></div>
+            <div class="definition"><dt>Drone Airspace</dt><dd>Simulate traffic, separation, and detect-and-avoid behavior for operations beyond the pilot’s visual line of sight.</dd></div>
+          </dl>
+          <p>The FAA has proposed Part 108 as a framework for routine beyond-visual-line-of-sight operations. This creates a timely setting for testing how autonomous systems detect aircraft, respond to conflict, and coordinate safely in shared airspace.</p>
+          <div class="resource-links"><a href="https://www.faa.gov/newsroom/us-transportation-secretary-sean-p-duffy-unveils-proposed-rule-unleash-american-drone" target="_blank" rel="noopener noreferrer">FAA Proposed BVLOS Rule ↗</a></div>
+        </article>
+        <aside class="side-note"><p class="note-title">Open decision</p><p>Simulate collective behavior?</p><p>Or test embodied task execution?</p></aside>
       </div>
     </section>
 
