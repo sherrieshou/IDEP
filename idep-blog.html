@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Research notes on AI evaluation, creativity, and 3D agent simulation." />
+  <title>IDEP | Research Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #f7f6f3;
+      --ink: #111111;
+      --muted: rgba(17, 17, 17, .4);
+      --rule: rgba(17, 17, 17, .09);
+      --highlight: #eee9c9;
+      --content: 600px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Afacad", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    button { color: inherit; font: inherit; }
+    [hidden] { display: none !important; }
+
+    .home {
+      width: min(calc(100% - 32px), var(--content));
+      margin: 0 auto;
+    }
+
+    .intro {
+      min-height: 390px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 790px;
+      padding: 92px 0 72px;
+    }
+
+    .intro h1 {
+      margin: 0 0 34px;
+      font-size: 1.25rem;
+      line-height: 1.4;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+
+    .intro p {
+      max-width: 600px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .essay-index {
+      padding: 0 0 100px;
+    }
+
+    .index-label,
+    .article-meta,
+    .back,
+    .article-footer {
+      font-family: inherit;
+      font-size: .69rem;
+      line-height: 1.4;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .index-label {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .essay-link {
+      display: grid;
+      grid-template-columns: 30px 1fr auto;
+      gap: 10px;
+      align-items: baseline;
+      padding: 8px 0;
+      border-top: 1px solid var(--rule);
+      text-decoration: none;
+    }
+
+    .essay-link:last-child { border-bottom: 1px solid var(--rule); }
+    .essay-link:hover .essay-title,
+    .essay-link:focus-visible .essay-title { background: var(--highlight); }
+    .essay-number,
+    .essay-type {
+      color: var(--muted);
+      font-family: inherit;
+      font-size: .75rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .essay-title {
+      width: fit-content;
+      font-size: 1rem;
+      line-height: 1.5;
+      transition: background-color .15s ease;
+    }
+
+    .reader {
+      width: min(calc(100% - 40px), var(--content));
+      margin: 0 auto;
+      padding: 46px 0 96px;
+    }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 76px;
+      border: 0;
+      padding: 0 0 4px;
+      border-bottom: 1px solid currentColor;
+      background: transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .article-header { margin-bottom: 64px; }
+    .article-meta { margin: 0 0 18px; color: var(--muted); }
+    .article-header h1 {
+      margin: 0 0 20px;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      line-height: 1.04;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .tldr {
+      margin: 0 0 72px;
+    }
+    .tldr-label {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .tldr ul {
+      margin: 0;
+      padding-left: 1.05rem;
+    }
+    .tldr li {
+      margin: .35rem 0;
+      padding-left: .2rem;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .prose h2 {
+      margin: 4.6rem 0 1.3rem;
+      padding-top: 0;
+      font-size: 1.35rem;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+    .prose h3 {
+      margin: 3rem 0 1rem;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+    .prose p,
+    .prose li,
+    .prose dd { font-size: 1rem; }
+    .prose p { margin: 0 0 1.35rem; }
+    .prose ul { margin: 0 0 2rem; padding-left: 1.25rem; }
+    .prose li { margin: .55rem 0; padding-left: .25rem; }
+    .prose strong { font-weight: 700; }
+    .prose mark {
+      padding: .08em .14em;
+      color: inherit;
+      background: var(--highlight);
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .prose a { text-underline-offset: 3px; }
+
+    .terms {
+      margin: 2.2rem 0 2.8rem;
+    }
+    .term {
+      display: grid;
+      grid-template-columns: 135px 1fr;
+      gap: 24px;
+      padding: 9px 0;
+    }
+    .term dt { font-weight: 700; }
+    .term dd { margin: 0; }
+
+    .formula {
+      margin: 1rem 0;
+      padding: 15px 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .78rem;
+      overflow-x: auto;
+    }
+
+    .note {
+      margin: 2.2rem 0;
+      padding: 16px 18px;
+      background: rgba(17, 17, 17, .035);
+      font-size: 1rem;
+    }
+
+    .article-footer {
+      margin-top: 76px;
+      padding-top: 0;
+      color: var(--muted);
+    }
+
+    .editor-tools {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 9px;
+      background: rgba(247, 246, 243, .94);
+      box-shadow: 0 0 0 1px rgba(17, 17, 17, .08);
+      backdrop-filter: blur(8px);
+    }
+    .editor-tools button {
+      appearance: none;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: .75rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .editor-tools button:hover,
+    .editor-tools button:focus-visible { opacity: .55; }
+    .editor-status {
+      min-width: 34px;
+      color: var(--muted);
+      font-size: .69rem;
+      text-align: right;
+    }
+    .is-editing [data-edit-id] { cursor: text; }
+    .is-editing [data-edit-id]:hover { background: rgba(238, 233, 201, .4); }
+    [data-edit-id][contenteditable="true"]:focus {
+      outline: 1px solid rgba(17, 17, 17, .2);
+      outline-offset: 4px;
+      background: rgba(238, 233, 201, .4);
+    }
+
+    @media (max-width: 640px) {
+      .intro { min-height: 340px; padding: 68px 0 58px; }
+      .essay-link { grid-template-columns: 34px 1fr; gap: 12px; }
+      .essay-type { display: none; }
+      .back { margin-bottom: 62px; }
+      .article-header { margin-bottom: 54px; }
+      .term { grid-template-columns: 1fr; gap: 4px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="home" id="home">
+      <header class="intro">
+        <h1>IDEP</h1>
+        <p>We started by asking how to evaluate creativity in model capabilities. Conversations with many researchers revealed a different problem. Benchmarks already exist, but industry rarely values or adopts them. We then asked how creativity could improve real task completion. Research on agents using objects in simulated worlds to solve unexpected physical tasks gave us a direction. We now see 3D simulation as a way to make creative reasoning useful in messy environments. Our next step is to choose one focused vertical, potentially the home or another domain, and one problem to solve. This is the question we most want to discuss.</p>
+      </header>
+
+      <nav class="essay-index" aria-label="Research notes">
+        <p class="index-label">Blog</p>
+        <a class="essay-link" href="#michelins-for-ai">
+          <span class="essay-number">01</span>
+          <span class="essay-title">Michelins for AI Benchmark Research</span>
+          <span class="essay-type">Initial direction</span>
+        </a>
+        <a class="essay-link" href="#arena-analysis">
+          <span class="essay-number">02</span>
+          <span class="essay-title">Arena.ai Competitive Analysis</span>
+          <span class="essay-type">Case study</span>
+        </a>
+        <a class="essay-link" href="#creativity-to-agents">
+          <span class="essay-number">03</span>
+          <span class="essay-title">From AI Creativity to 3D Agents</span>
+          <span class="essay-type">Interview synthesis</span>
+        </a>
+        <a class="essay-link" href="#simulation-in-3d">
+          <span class="essay-number">04</span>
+          <span class="essay-title">Simulation in 3D Worlds</span>
+          <span class="essay-type">Current direction</span>
+        </a>
+      </nav>
+    </section>
+
+    <article class="reader" id="michelins-for-ai" hidden>
+      <a class="back" href="#home">← All notes</a>
+      <header class="article-header">
+        <p class="article-meta">01 · Initial direction</p>
+        <h1>Michelins for AI Benchmark Research</h1>
+      </header>
+      <aside class="tldr" aria-label="Article summary">
+        <p class="tldr-label">TL;DR</p>
+        <ul>
+          <li><strong>Why:</strong> We wanted to understand why strong AI evaluation research often fails to reach industry.</li>
+          <li><strong>Key points:</strong> The main gaps are visibility, adoption, and interpretation. Interactive tests and expert review can make capability evidence easier to understand and trust.</li>
+          <li><strong>Finding:</strong> Useful benchmarks should evaluate the full system around task execution, not only the foundation model.</li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <h2>1. The Model</h2>
+        <p>The first Michelin Guide was published in France in 1900. It listed maps, petrol stations, and other resources intended to encourage motorists to travel farther, wear out their tires, and purchase more.</p>
+        <p>Over time, the guide developed into a credible restaurant rating system. Anonymous inspectors paid for their own meals and produced independent assessments. <strong>What began as marketing became trusted evaluation infrastructure.</strong></p>
+
+        <h2>2. The Gap</h2>
+        <p>AI research and industry lack a comparable system for discovering, interpreting, and validating evaluation methods. New benchmark and data-pipeline research appears faster than most people can meaningfully assess it.</p>
+        <dl class="terms">
+          <div class="term"><dt>Visibility</dt><dd>Independent research is difficult to discover unless it is continuously maintained, promoted, or associated with a well-known lab.</dd></div>
+          <div class="term"><dt>Adoption</dt><dd>Industry teams rarely have enough time to follow every paper or determine which methods matter in their own application context.</dd></div>
+          <div class="term"><dt>Interpretation</dt><dd>Benchmark scores describe performance numerically, but many people cannot see what a model can actually do through those numbers alone.</dd></div>
+        </dl>
+        <p>The result is a visibility gap: <mark>research with strong institutional reach receives attention, while other useful methods remain difficult to find and evaluate.</mark></p>
+
+        <h2>3. The Ecosystem</h2>
+        <p>What if evaluating a model were as accessible as playing a game on Steam? Users could interact with capabilities directly, compare how models behave, and discuss the differences through visible evidence.</p>
+        <p>Expert “inspectors” could then test whether a capability creates value inside a real application. Their extended reviews would document the model, evaluation method, use context, and observed outcome.</p>
+        <p>This evidence could help industry select models, help users understand capabilities, and give researchers feedback about what deserves further development. Together, these exchanges could form a healthier loop between <strong>research, users, and industry.</strong></p>
+        <p class="note"><strong>Current takeaway.</strong> Most companies evaluate the foundation model. What matters increasingly is the architecture and systems surrounding task execution. We may need benchmarks that evaluate these systems as a whole.</p>
+      </div>
+      <footer class="article-footer">IDEP · Research notes</footer>
+    </article>
+
+    <article class="reader" id="arena-analysis" hidden>
+      <a class="back" href="#home">← All notes</a>
+      <header class="article-header">
+        <p class="article-meta">02 · Case study</p>
+        <h1>Arena.ai Competitive Analysis</h1>
+      </header>
+      <aside class="tldr" aria-label="Article summary">
+        <p class="tldr-label">TL;DR</p>
+        <ul>
+          <li><strong>Why:</strong> We studied Arena to understand how an evaluation method earned industry trust and adoption.</li>
+          <li><strong>Key points:</strong> Arena combined direct human comparisons with open access, frequent leaderboard updates, research visibility, and reusable datasets. Bradley Terry fits fixed model strengths better than sequential Elo.</li>
+          <li><strong>Finding:</strong> Adopted benchmarks align with human preferences, separate models with confidence, and use fresh prompts.</li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <h2>1. Origin</h2>
+        <p>Arena began as a response to a credibility problem. The team trained Vicuna-13B by fine-tuning LLaMA on 70,000 user-shared conversations collected through ShareGPT and built FastChat as an open-source toolkit for training and evaluating chat models.</p>
+        <p>Early evaluation relied on GPT-4 as a judge, but a single automated score was not persuasive enough to establish that Vicuna performed better. <strong>Arena introduced direct, pairwise model comparisons based on human votes.</strong></p>
+        <h3>Why It Gained Traction</h3>
+        <ul>
+          <li>Competition among proprietary and open-source models was intense, and many early voters were developers.</li>
+          <li>Users could access GPT-4, Claude, and PaLM 2 for free inside the arena.</li>
+          <li>The team published an updated leaderboard every two weeks.</li>
+          <li>The MT-Bench paper gave the evaluation method research visibility.</li>
+          <li>Open datasets made the system useful beyond the product itself.</li>
+        </ul>
+
+        <h2>2. Ranking System</h2>
+        <h3>Elo</h3>
+        <p>Arena initially used Elo because it was familiar and had already appeared in Anthropic’s LLM research.</p>
+        <div class="formula">E<sub>A</sub> = 1 / (1 + 10<sup>((R<sub>B</sub> − R<sub>A</sub>) / 400)</sup>)</div>
+        <div class="formula">R<sub>A</sub>′ = R<sub>A</sub> + K · (S<sub>A</sub> − E<sub>A</sub>)</div>
+        <p>Elo updates ratings one comparison at a time, so results depend on vote order and the selected K value. That behavior makes sense for chess players whose skill changes, but models remain fixed during evaluation.</p>
+        <h3>Bradley Terry</h3>
+        <div class="formula">P(A beats B) = 1 / (1 + e<sup>(ξ<sub>B</sub> − ξ<sub>A</sub>)</sup>)</div>
+        <ul>
+          <li>Each model receives one fitted strength value, ξ.</li>
+          <li>All votes are fitted together through logistic regression.</li>
+          <li>Each battle becomes one row, with +1 for model A and −1 for model B.</li>
+          <li>A tie counts as half a win and half a loss.</li>
+          <li>The fitted strength is rescaled to resemble Elo, making a 100-point difference roughly equivalent to a 64% win probability.</li>
+        </ul>
+        <h3>Potential Upgrades</h3>
+        <dl class="terms">
+          <div class="term"><dt>Davidson / Rao Kupper</dt><dd>Model ties directly instead of converting them into partial wins and losses.</dd></div>
+          <div class="term"><dt>Crowd-BT</dt><dd>Weight voters according to their estimated reliability.</dd></div>
+          <div class="term"><dt>Prompt-to-Leaderboard</dt><dd>Estimate model rankings conditionally for different kinds of prompts.</dd></div>
+          <div class="term"><dt>Mixture Models</dt><dd>Represent different user preferences instead of forcing every vote into one shared ranking.</dd></div>
+        </dl>
+
+        <h2>3. Arena-Hard</h2>
+        <p>A stronger benchmark depends on three qualities:</p>
+        <dl class="terms">
+          <div class="term"><dt>Human Agreement</dt><dd>Scores should correlate with human preferences in real-world use cases.</dd></div>
+          <div class="term"><dt>Separability</dt><dd>Scores should include confidence intervals and distinguish models with high confidence.</dd></div>
+          <div class="term"><dt>Freshness</dt><dd>Prompts should be new and unseen to reduce test leakage.</dd></div>
+        </dl>
+        <p><a href="https://arena.ai/blog/arena-hard" target="_blank" rel="noopener noreferrer">Read the Arena-Hard blog</a> or visit the <a href="https://github.com/lmarena/arena-hard-auto" target="_blank" rel="noopener noreferrer">GitHub repository</a>.</p>
+      </div>
+      <footer class="article-footer">IDEP · Research notes</footer>
+    </article>
+
+    <article class="reader" id="creativity-to-agents" hidden>
+      <a class="back" href="#home">← All notes</a>
+      <header class="article-header">
+        <p class="article-meta">03 · Interview synthesis</p>
+        <h1>From AI Creativity to 3D Agents</h1>
+      </header>
+      <aside class="tldr" aria-label="Article summary">
+        <p class="tldr-label">TL;DR</p>
+        <ul>
+          <li><strong>Why:</strong> We interviewed creativity researchers to clarify what should be measured and what evidence matters.</li>
+          <li><strong>Key points:</strong> Creativity evaluation must separate outcome, behavior, and process. A strategy should work within its environment, differ in its logic, and create value over time.</li>
+          <li><strong>Finding:</strong> 3D simulation can reveal how a strategy emerges and whether it transfers across changing environments.</li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <h2>1. Define</h2>
+        <p>The interviews revealed that AI creativity research often examines different objects.</p>
+        <dl class="terms">
+          <div class="term"><dt>Cheng Qian</dt><dd>In EscapeBench and CreativityBench, <strong>creativity appears as unconventional but effective tool use</strong> within a constrained action space.</dd></div>
+          <div class="term"><dt>Antonios Liapis</dt><dd>Creativity cannot be reduced to a final artifact. <strong>It emerges through interaction, selection, and shifts in direction.</strong></dd></div>
+          <div class="term"><dt>Vijeta Deshpande</dt><dd>A shared capability appears across creativity tasks, but <strong>it cannot explain why an output matters in a specific context.</strong></dd></div>
+        </dl>
+        <p>These different definitions also lead researchers to evaluate creativity at different levels.</p>
+        <dl class="terms">
+          <div class="term"><dt>Outcome</dt><dd>Task completion, novelty, and usefulness. Easy to compare; weak at explaining how a solution emerged.</dd></div>
+          <div class="term"><dt>Behavior</dt><dd>Tools used and strategy selected. Reveals meaningful difference, but may mistake randomness for exploration.</dd></div>
+          <div class="term"><dt>Process</dt><dd>Departure from the common path, response to failure, and triggers for strategy shifts. Shows how ideas evolve and influence later decisions.</dd></div>
+        </dl>
+        <p><mark>These levels answer three different questions: what result was produced, what method was used, and how that method was discovered.</mark></p>
+
+        <h2>2. Reframe</h2>
+        <p>Moving away from a universal creativity score does not mean discarding the earlier research. The interviews helped us preserve three forms of evidence that can travel across domains:</p>
+        <dl class="terms">
+          <div class="term"><dt>Outcome</dt><dd>Whether the agent solved the problem and whether the result was effective and reproducible.</dd></div>
+          <div class="term"><dt>Process</dt><dd>How the agent explored, failed, gathered information, and changed direction, including whether an early attempt became valuable later.</dd></div>
+          <div class="term"><dt>Strategy</dt><dd>Which approach the agent ultimately used and whether it truly differed from the common solution.</dd></div>
+        </dl>
+        <p>Using this evidence, we can replace the broad judgment “Is this behavior creative?” with three more specific judgments: <strong>Does it work within the environmental constraints? Does its strategic logic differ? Does it create value over time?</strong></p>
+
+        <h2>3. Ground</h2>
+        <p>Qiancheng’s research provides a key bridge. In EscapeBench, an agent completes escape-room-like tasks using available objects and actions. Success remains objectively verifiable, but the correct intermediate steps are not prescribed.</p>
+        <p>CreativityBench extends this idea to unconventional object use. Together, the benchmarks combine a clear goal with an open solution space where behavior leaves verifiable consequences.</p>
+        <p>In 3D simulation, agents act through spatial relationships and environmental feedback. Researchers can replay complete trajectories and systematically vary the world.</p>
+        <p class="note"><strong>The shift.</strong> Qiancheng’s work asks whether an agent can find an unconventional but effective solution; 3D simulation lets us ask <mark>how that solution emerged and whether it transfers.</mark></p>
+      </div>
+      <footer class="article-footer">IDEP · Research notes</footer>
+    </article>
+
+    <article class="reader" id="simulation-in-3d" hidden>
+      <a class="back" href="#home">← All notes</a>
+      <header class="article-header">
+        <p class="article-meta">04 · Current direction</p>
+        <h1>Simulation in 3D Worlds</h1>
+      </header>
+      <aside class="tldr" aria-label="Article summary">
+        <p class="tldr-label">TL;DR</p>
+        <ul>
+          <li><strong>Why:</strong> We needed to identify where 3D simulation creates value beyond interviews, spreadsheets, and conventional simulation.</li>
+          <li><strong>Key points:</strong> Behavioral simulation predicts coordination. Physical simulation tests action with spatial consequences. The two directions are high stakes collective orchestration and embodied task execution.</li>
+          <li><strong>Finding:</strong> We should choose one focused vertical where 3D is essential, potentially a task in the home.</li>
+        </ul>
+      </aside>
+      <div class="prose">
+        <h2>1. Distinguish</h2>
+        <p>Simulating agent-to-agent communication in a three-dimensional setting is different from placing agents inside a world governed by physical properties.</p>
+        <dl class="terms">
+          <div class="term"><dt>Behavioral Simulation</dt><dd>Models how people or agents communicate, coordinate, and make decisions inside a spatial context.</dd></div>
+          <div class="term"><dt>Physical Simulation</dt><dd>Models movement, object interaction, spatial constraints, and embodied task execution, as required in robotics.</dd></div>
+        </dl>
+        <p>The first predicts behavior. The second tests whether an agent can act successfully in a world with physical consequences. <strong>Our next decision is which of these systems creates a meaningful and testable form of enterprise value.</strong></p>
+        <h3>The Simile Reference</h3>
+        <p>Simile applies behavioral prediction to retail and merchandising contexts, including work associated with CVS. Its direction moved away from a persistent 3D environment and toward collecting richer human-behavior data through interviews.</p>
+        <p><mark>When does representing behavior in 3D add value that cannot be produced through interviews, spreadsheets, or conventional simulation?</mark></p>
+
+        <h2>2. Orchestrate</h2>
+        <p>One direction is large-scale orchestration: using simulation to compare plans before many people must execute them under time pressure.</p>
+        <p><strong>The useful cases share three properties:</strong> many people, a short execution window, and a high cost of failure.</p>
+        <dl class="terms">
+          <div class="term"><dt>Retail</dt><dd>Coordinate merchandising, staffing, customer flow, and operational changes across a store.</dd></div>
+          <div class="term"><dt>Plant Turnaround</dt><dd>Plan maintenance logistics when a refinery or industrial plant must stop, service equipment, and restart quickly.</dd></div>
+          <div class="term"><dt>Hospital Move Day</dt><dd>Coordinate staff, patients, equipment, routes, and dependencies during a facility transition.</dd></div>
+          <div class="term"><dt>Architecture Planning</dt><dd>Test how layouts influence movement, collaboration, congestion, and use before construction or reconfiguration.</dd></div>
+        </dl>
+
+        <h2>3. Embody</h2>
+        <p>A second direction is to simulate physical environments and evaluate how agents manipulate objects, navigate constraints, and discover effective strategies.</p>
+        <dl class="terms">
+          <div class="term"><dt>Generated Homes</dt><dd>Create diverse 3D domestic environments for training and evaluating robots on household tasks.</dd></div>
+          <div class="term"><dt>Drone Airspace</dt><dd>Simulate traffic, separation, and detect-and-avoid behavior for operations beyond the pilot’s visual line of sight.</dd></div>
+        </dl>
+        <p>The FAA has proposed Part 108 as a framework for routine beyond-visual-line-of-sight operations. This creates a timely setting for testing how autonomous systems detect aircraft, respond to conflict, and coordinate safely in shared airspace.</p>
+        <p><a href="https://www.faa.gov/newsroom/us-transportation-secretary-sean-p-duffy-unveils-proposed-rule-unleash-american-drone" target="_blank" rel="noopener noreferrer">Read the FAA proposed BVLOS rule</a>.</p>
+        <p class="note"><strong>Open decision.</strong> Simulate collective behavior, or test embodied task execution?</p>
+      </div>
+      <footer class="article-footer">IDEP · Research notes</footer>
+    </article>
+  </main>
+
+  <div class="editor-tools" aria-label="Page editor">
+    <button type="button" id="edit-toggle">Edit</button>
+    <button type="button" id="edit-reset">Reset</button>
+    <span class="editor-status" id="edit-status" aria-live="polite"></span>
+  </div>
+
+  <script>
+    const home = document.querySelector('#home');
+    const articles = [...document.querySelectorAll('.reader')];
+    const editToggle = document.querySelector('#edit-toggle');
+    const editReset = document.querySelector('#edit-reset');
+    const editStatus = document.querySelector('#edit-status');
+    const editStoragePrefix = 'idep-copy-v1:';
+    const editableSelector = [
+      '.intro h1',
+      '.intro p',
+      '.essay-title',
+      '.article-header h1',
+      '.tldr li',
+      '.prose h2',
+      '.prose h3',
+      '.prose p',
+      '.prose li',
+      '.prose dt',
+      '.prose dd'
+    ].join(',');
+    const editableElements = [...new Set(document.querySelectorAll(editableSelector))];
+    let editing = false;
+    let statusTimer;
+
+    editableElements.forEach((element, index) => {
+      const editId = `copy-${index}`;
+      element.dataset.editId = editId;
+      try {
+        const saved = localStorage.getItem(`${editStoragePrefix}${editId}`);
+        if (saved !== null) element.innerHTML = saved;
+      } catch (error) {
+        editStatus.textContent = 'Local only';
+      }
+
+      element.addEventListener('input', () => {
+        try {
+          localStorage.setItem(`${editStoragePrefix}${editId}`, element.innerHTML);
+          editStatus.textContent = 'Saved';
+          clearTimeout(statusTimer);
+          statusTimer = setTimeout(() => { editStatus.textContent = ''; }, 1200);
+        } catch (error) {
+          editStatus.textContent = 'Not saved';
+        }
+      });
+    });
+
+    function setEditing(active) {
+      editing = active;
+      document.body.classList.toggle('is-editing', editing);
+      editableElements.forEach((element) => {
+        element.contentEditable = editing ? 'true' : 'false';
+        element.spellcheck = editing;
+      });
+      editToggle.textContent = editing ? 'Done' : 'Edit';
+      editStatus.textContent = editing ? 'Editing' : '';
+    }
+
+    editToggle.addEventListener('click', () => setEditing(!editing));
+
+    editReset.addEventListener('click', () => {
+      if (!window.confirm('Reset all browser edits to the original page text?')) return;
+      try {
+        editableElements.forEach((element) => {
+          localStorage.removeItem(`${editStoragePrefix}${element.dataset.editId}`);
+        });
+      } finally {
+        location.reload();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (editing && event.target.closest('a')) event.preventDefault();
+    });
+
+    function showPage() {
+      const id = location.hash.slice(1);
+      const article = articles.find((item) => item.id === id);
+      home.hidden = Boolean(article);
+      articles.forEach((item) => { item.hidden = item !== article; });
+      document.title = article
+        ? `${article.querySelector('h1').textContent} | IDEP`
+        : 'IDEP | Research Notes';
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('hashchange', showPage);
+    showPage();
+  </script>
+</body>
+</html>
