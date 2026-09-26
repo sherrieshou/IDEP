@@ -4,20 +4,28 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const STORAGE_KEY = 'trace-spatial-prototype-v1';
 const DEFAULT_COLORS = {
-  research: '#93d7e2',
-  exploration: '#f0c399',
-  prototype: '#e9aebc',
-  final: '#c49ac7'
+  research: '#dce1e3',
+  exploration: '#e7e5e1',
+  prototype: '#d8d6d4',
+  final: '#c7c7c7'
+};
+const LEGACY_COLOR_MAP = {
+  '#86cfdd': '#e4e7e8',
+  '#93d7e2': '#dce1e3',
+  '#f0c399': '#e7e5e1',
+  '#bcd4b5': '#dedede',
+  '#e9aebc': '#d8d6d4',
+  '#c49ac7': '#c7c7c7'
 };
 
 const initialData = {
   platforms: [
-    { id: 'brief', label: 'Initial brief', note: 'Starting point', depth: 'research', color: '#86cfdd', position: [-8, -2.5, 2.5] },
-    { id: 'research', label: 'AI research', note: 'Search and synthesis', depth: 'research', color: '#93d7e2', position: [-4, 3.2, -1.5] },
-    { id: 'explore', label: 'Explorations', note: 'Multiple directions', depth: 'exploration', color: '#f0c399', position: [0, .2, 1.7] },
-    { id: 'collab', label: 'Collaboration', note: 'Human and AI feedback', depth: 'exploration', color: '#bcd4b5', position: [4.7, 3.1, -1.8] },
-    { id: 'prototype', label: 'Prototype v0', note: 'Testing the direction', depth: 'prototype', color: '#e9aebc', position: [4.4, -3.1, 1.5] },
-    { id: 'final', label: 'Final direction', note: 'Selected path', depth: 'final', color: '#c49ac7', position: [9.2, -.5, -.5] }
+    { id: 'brief', label: 'Initial brief', note: 'Starting point', depth: 'research', color: '#e4e7e8', position: [-8, -2.5, 2.5] },
+    { id: 'research', label: 'AI research', note: 'Search and synthesis', depth: 'research', color: '#dce1e3', position: [-4, 3.2, -1.5] },
+    { id: 'explore', label: 'Explorations', note: 'Multiple directions', depth: 'exploration', color: '#e7e5e1', position: [0, .2, 1.7] },
+    { id: 'collab', label: 'Collaboration', note: 'Human and AI feedback', depth: 'exploration', color: '#dedede', position: [4.7, 3.1, -1.8] },
+    { id: 'prototype', label: 'Prototype v0', note: 'Testing the direction', depth: 'prototype', color: '#d8d6d4', position: [4.4, -3.1, 1.5] },
+    { id: 'final', label: 'Final direction', note: 'Selected path', depth: 'final', color: '#c7c7c7', position: [9.2, -.5, -.5] }
   ],
   connections: [
     { id: 'c1', from: 'brief', to: 'research', label: 'AI research' },
@@ -72,8 +80,8 @@ let rewireState = null;
 let focusState = null;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#f8f6f1');
-scene.fog = new THREE.Fog('#f8f6f1', 32, 58);
+scene.background = new THREE.Color('#ffffff');
+scene.fog = new THREE.Fog('#ffffff', 32, 58);
 
 const camera = new THREE.PerspectiveCamera(38, 1, .1, 200);
 camera.position.set(2, 14, 29);
@@ -155,7 +163,12 @@ const RESEARCH_AUDIO = 'Creativity, the creative craft, is iteration. A sketch i
 function loadData() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored?.platforms && stored?.connections) return stored;
+    if (stored?.platforms && stored?.connections) {
+      stored.platforms.forEach((platform) => {
+        platform.color = LEGACY_COLOR_MAP[platform.color?.toLowerCase()] || platform.color;
+      });
+      return stored;
+    }
   } catch (error) {
     console.warn('Could not load saved map.', error);
   }
@@ -186,7 +199,7 @@ function makeResearchTexture(kind, colors) {
   canvas.width = 640;
   canvas.height = 440;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#f3f0e9';
+  ctx.fillStyle = '#f6f6f6';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = '#292a28';
   ctx.fillStyle = colors[0];
@@ -349,7 +362,7 @@ function runSpatialSearch(query) {
 }
 
 function addResearchCollage(group, platform) {
-  const palette = ['#ee8b72', '#6abac8', '#d6be52'];
+  const palette = ['#8b8b8b', '#b9b9b9', '#5e5e5e'];
   const cards = [
     { kind: 'shift', position: [-2.15, 1.35, -.25], rotation: [-.12, .1, -.08], size: [2.45, 1.68], meta: { type: 'VISUAL NOTE 01', title: 'Creative shift', body: 'A meaningful moment is the point where the designer changes direction, not only the quality of the final artifact.', source: 'Antonios Liapis interview · creative-shift evaluation' } },
     { kind: 'frame', position: [.15, 2.05, -.7], rotation: [-.06, -.16, .05], size: [2.05, 1.42], meta: { type: 'VISUAL NOTE 02', title: 'Frame and reframe', body: 'A stimulus becomes useful when it changes the constraints through which the problem is understood.', source: 'Antonios Liapis interview · lateral thinking and reframing' } },
@@ -376,7 +389,7 @@ function addResearchCollage(group, platform) {
   for (let i = 0; i < 5; i += 1) {
     const stone = tagResearchArtifact(new THREE.Mesh(
       new THREE.CylinderGeometry(.22 + i * .025, .3, .12 + i * .09, 6),
-      new THREE.MeshPhysicalMaterial({ color: i % 2 ? '#d8a29a' : '#d9c35c', roughness: .78 })
+      new THREE.MeshPhysicalMaterial({ color: i % 2 ? '#a9a9a9' : '#d1d1d1', roughness: .78 })
     ), platform.id, steppingMeta);
     stone.position.set(-2.25 + i * .58, .28 + i * .17, 1.25 - i * .18);
     stone.rotation.y = i * .38;
@@ -385,8 +398,8 @@ function addResearchCollage(group, platform) {
 
   const ownershipMeta = { type: '3D OBJECT', title: 'Ownership gap', body: 'Giving feedback can create investment without creating authorship. Participation and ownership are different.', source: 'Antonios Liapis interview · game-in-a-day study' };
   const ownership = tagResearchArtifact(new THREE.Group(), platform.id, ownershipMeta);
-  const torusA = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.5), new THREE.MeshStandardMaterial({ color: '#bd5264', roughness: .55 }));
-  const torusB = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.35), new THREE.MeshStandardMaterial({ color: '#547f71', roughness: .55 }));
+  const torusA = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.5), new THREE.MeshStandardMaterial({ color: '#676767', roughness: .55 }));
+  const torusB = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.35), new THREE.MeshStandardMaterial({ color: '#b6b6b6', roughness: .55 }));
   torusA.rotation.x = Math.PI / 2; torusB.rotation.x = Math.PI / 2; torusB.rotation.z = Math.PI;
   torusA.position.x = -.25; torusB.position.x = .25;
   ownership.add(torusA, torusB);
@@ -398,7 +411,7 @@ function addResearchCollage(group, platform) {
   const audioMeta = { type: 'AUDIO SOURCE', title: 'Interview fragment', body: 'Click to hear a short spoken synthesis of the interview segment that anchors this visual cluster.', source: 'Antonios Liapis interview · September 21, 2026' };
   const audio = tagResearchArtifact(new THREE.Mesh(
     new THREE.SphereGeometry(.25, 28, 28),
-    new THREE.MeshPhysicalMaterial({ color: '#2f302d', emissive: '#53232c', emissiveIntensity: .25, roughness: .38 })
+    new THREE.MeshPhysicalMaterial({ color: '#303030', emissive: '#666666', emissiveIntensity: .18, roughness: .38 })
   ), platform.id, { ...audioMeta, audio: true });
   audio.position.set(-3.05, .48, -.95);
   audio.userData.audioPulse = true;
@@ -410,7 +423,7 @@ function addResearchCollage(group, platform) {
   });
   const waveform = tagResearchArtifact(new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(wavePoints),
-    new THREE.LineBasicMaterial({ color: '#652c39', transparent: true, opacity: .72 })
+    new THREE.LineBasicMaterial({ color: '#555555', transparent: true, opacity: .72 })
   ), platform.id, audioMeta);
   group.add(waveform);
 }
@@ -457,7 +470,7 @@ function buildPlatform(platform) {
       const angle = (index / 96) * Math.PI * 2;
       return new THREE.Vector3(Math.cos(angle) * 4.52, .11, Math.sin(angle) * 3.07);
     })),
-    new THREE.LineDashedMaterial({ color: '#a43b4a', dashSize: .18, gapSize: .11, transparent: true, opacity: .9 })
+    new THREE.LineDashedMaterial({ color: '#555555', dashSize: .18, gapSize: .11, transparent: true, opacity: .9 })
   );
   selection.computeLineDistances();
   selection.visible = platform.id === selectedId;
@@ -553,7 +566,7 @@ function buildArrow(connection) {
   midpoint.z += delta.x >= 0 ? .5 : -.5;
   const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to);
   const selected = connection.id === selectedConnectionId;
-  const material = new THREE.MeshBasicMaterial({ color: selected ? '#7f2535' : '#a43b4a', transparent: true, opacity: selected ? 1 : .82 });
+  const material = new THREE.MeshBasicMaterial({ color: selected ? '#333333' : '#686868', transparent: true, opacity: selected ? 1 : .75 });
   const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 34, selected ? .055 : .035, 7, false), material);
   tube.userData.connectionId = connection.id;
   connectionLayer.add(tube);
