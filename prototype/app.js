@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 const STORAGE_KEY = 'trace-spatial-prototype-v1';
@@ -58,6 +57,7 @@ let connectMode = false;
 let connectionStart = null;
 let activeFilter = 'all';
 let saveTimer = null;
+let dragState = null;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#f8f6f1');
@@ -85,20 +85,6 @@ controls.minDistance = 10;
 controls.maxDistance = 55;
 controls.target.set(1, 0, 0);
 
-const transform = new TransformControls(camera, renderer.domElement);
-transform.setMode('translate');
-transform.setSize(.72);
-transform.addEventListener('dragging-changed', (event) => { controls.enabled = !event.value; });
-transform.addEventListener('objectChange', () => {
-  const group = transform.object;
-  if (!group?.userData.platformId) return;
-  const platform = getPlatform(group.userData.platformId);
-  platform.position = group.position.toArray().map((value) => Number(value.toFixed(2)));
-  renderConnections();
-  scheduleSave();
-});
-scene.add(transform.getHelper());
-
 scene.add(new THREE.HemisphereLight('#ffffff', '#c7c2b7', 2.1));
 const keyLight = new THREE.DirectionalLight('#ffffff', 2.4);
 keyLight.position.set(-5, 12, 8);
@@ -110,6 +96,8 @@ scene.add(connectionLayer, platformLayer);
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+const dragPlane = new THREE.Plane();
+const dragIntersection = new THREE.Vector3();
 const platformObjects = new Map();
 const connectionObjects = new Map();
 
@@ -191,10 +179,32 @@ function buildPlatform(platform) {
   selection.userData.selectionRing = true;
   group.add(selection);
 
+  const anchorGroup = new THREE.Group();
+  const anchorPositions = [
+    [-4.25, .14, 0],
+    [4.25, .14, 0],
+    [0, .14, -2.89],
+    [0, .14, 2.89]
+  ];
+  anchorPositions.forEach((position, index) => {
+    const anchor = new THREE.Mesh(
+      new THREE.SphereGeometry(.12, 18, 18),
+      new THREE.MeshBasicMaterial({ color: '#f8f6f1' })
+    );
+    anchor.position.fromArray(position);
+    anchor.material.depthTest = false;
+    anchor.renderOrder = 20;
+    anchor.userData.platformId = platform.id;
+    anchor.userData.anchorIndex = index;
+    anchorGroup.add(anchor);
+  });
+  anchorGroup.visible = platform.id === selectedId || connectMode;
+  group.add(anchorGroup);
+
   const label = makeLabel(platform);
   group.add(label);
   platformLayer.add(group);
-  platformObjects.set(platform.id, { group, disc, outline, selection, label, material, outlineMaterial });
+  platformObjects.set(platform.id, { group, disc, outline, selection, anchorGroup, label, material, outlineMaterial });
 }
 
 function clearGroup(group) {
@@ -210,31 +220,44 @@ function clearGroup(group) {
 }
 
 function renderPlatforms() {
-  transform.detach();
   clearGroup(platformLayer);
   platformObjects.clear();
   data.platforms.forEach(buildPlatform);
   applyFilter();
   if (selectedId && platformObjects.has(selectedId)) {
     platformObjects.get(selectedId).selection.visible = true;
-    transform.attach(platformObjects.get(selectedId).group);
   }
+}
+
+function anchorPair(fromObject, toObject) {
+  const localAnchors = [
+    new THREE.Vector3(-4.25, .16, 0),
+    new THREE.Vector3(4.25, .16, 0),
+    new THREE.Vector3(0, .16, -2.89),
+    new THREE.Vector3(0, .16, 2.89)
+  ];
+  let best = null;
+  localAnchors.forEach((fromLocal, fromIndex) => {
+    const from = fromObject.localToWorld(fromLocal.clone());
+    localAnchors.forEach((toLocal, toIndex) => {
+      const to = toObject.localToWorld(toLocal.clone());
+      const distance = from.distanceToSquared(to);
+      if (!best || distance < best.distance) best = { from, to, fromIndex, toIndex, distance };
+    });
+  });
+  return best;
 }
 
 function buildArrow(connection) {
   const fromObject = platformObjects.get(connection.from)?.group;
   const toObject = platformObjects.get(connection.to)?.group;
   if (!fromObject || !toObject) return;
-  const from = fromObject.position.clone();
-  const to = toObject.position.clone();
+  const snapped = anchorPair(fromObject, toObject);
+  const from = snapped.from;
+  const to = snapped.to;
   const delta = to.clone().sub(from);
-  const direction = delta.clone().normalize();
-  from.add(direction.clone().multiplyScalar(2.5));
-  to.add(direction.clone().multiplyScalar(-2.8));
-  from.y += .35;
-  to.y += .35;
   const midpoint = from.clone().lerp(to, .5);
-  midpoint.y += Math.min(2.2, 1 + delta.length() * .08);
+  midpoint.y += Math.min(2.2, .75 + delta.length() * .08);
   midpoint.z += delta.x >= 0 ? .5 : -.5;
   const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to);
   const material = new THREE.MeshBasicMaterial({ color: '#a43b4a', transparent: true, opacity: .85 });
@@ -265,12 +288,11 @@ function renderAll() {
 
 function setSelected(id) {
   selectedId = id;
-  platformObjects.forEach(({ selection, label }, platformId) => {
+  platformObjects.forEach(({ selection, anchorGroup, label }, platformId) => {
     selection.visible = platformId === id;
+    anchorGroup.visible = connectMode || platformId === id;
     label.userData.element.classList.toggle('selected', platformId === id);
   });
-  transform.detach();
-  if (id && platformObjects.has(id) && !connectMode) transform.attach(platformObjects.get(id).group);
   updateInspector();
   if (window.innerWidth <= 680) dom.inspector.classList.toggle('open', Boolean(id));
 }
@@ -362,7 +384,7 @@ function deleteSelected() {
 function startConnect(fromSelected = false) {
   connectMode = true;
   connectionStart = fromSelected ? selectedId : null;
-  transform.detach();
+  platformObjects.forEach(({ anchorGroup }) => { anchorGroup.visible = true; });
   dom.connect.classList.add('active');
   dom.toast.textContent = connectionStart ? 'Choose the destination platform' : 'Choose the starting platform';
   dom.toast.classList.add('visible');
@@ -399,18 +421,67 @@ function platformFromPointer(event) {
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
-  const targets = [...platformObjects.values()].flatMap(({ disc, outline }) => [disc, outline]);
+  const targets = [...platformObjects.values()].flatMap(({ disc, outline, anchorGroup }) => [disc, outline, ...anchorGroup.children]);
   const hit = raycaster.intersectObjects(targets, false)[0];
   return hit?.object.userData.platformId || null;
 }
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
-  if (transform.dragging) return;
   const id = platformFromPointer(event);
-  if (connectMode && id) finishConnect(id);
-  else if (id) setSelected(id);
-  else if (!connectMode) setSelected(null);
+  if (connectMode && id) {
+    finishConnect(id);
+    return;
+  }
+  if (!id) {
+    setSelected(null);
+    return;
+  }
+  setSelected(id);
+  const group = platformObjects.get(id).group;
+  const cameraNormal = new THREE.Vector3();
+  camera.getWorldDirection(cameraNormal);
+  dragPlane.setFromNormalAndCoplanarPoint(cameraNormal, group.position);
+  raycaster.ray.intersectPlane(dragPlane, dragIntersection);
+  dragState = {
+    id,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false,
+    offset: group.position.clone().sub(dragIntersection)
+  };
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(event.pointerId);
 });
+
+renderer.domElement.addEventListener('pointermove', (event) => {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
+  if (distance > 3) dragState.moved = true;
+  if (!dragState.moved) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  if (!raycaster.ray.intersectPlane(dragPlane, dragIntersection)) return;
+  const object = platformObjects.get(dragState.id)?.group;
+  const platform = getPlatform(dragState.id);
+  if (!object || !platform) return;
+  object.position.copy(dragIntersection).add(dragState.offset);
+  platform.position = object.position.toArray().map((value) => Number(value.toFixed(2)));
+  renderConnections();
+  scheduleSave();
+});
+
+function endPlatformDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+  dragState = null;
+  controls.enabled = true;
+}
+
+renderer.domElement.addEventListener('pointerup', endPlatformDrag);
+renderer.domElement.addEventListener('pointercancel', endPlatformDrag);
 
 dom.add.addEventListener('click', addPlatform);
 dom.delete.addEventListener('click', deleteSelected);
@@ -451,7 +522,7 @@ window.addEventListener('keydown', (event) => {
     connectionStart = null;
     dom.connect.classList.remove('active');
     dom.toast.classList.remove('visible');
-    if (selectedId) transform.attach(platformObjects.get(selectedId).group);
+    platformObjects.forEach(({ anchorGroup }, id) => { anchorGroup.visible = id === selectedId; });
   }
   if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) deleteSelected();
 });

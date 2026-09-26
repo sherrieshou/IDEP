@@ -28,14 +28,9 @@ button { cursor: pointer; }
   z-index: 20;
 }
 .brand {
-  height: 100%; display: flex; align-items: center; gap: 12px; padding: 0 22px;
+  height: 100%; display: flex; align-items: center; padding: 0 22px;
   border-right: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 720; font-size: 1.18rem;
 }
-.brand-mark { width: 24px; height: 24px; display: grid; grid-template-columns: repeat(2, 7px); gap: 3px; align-content: center; }
-.brand-mark i { width: 7px; height: 7px; border-radius: 50%; background: #2d3940; }
-.brand-mark i:nth-child(2) { background: #c95652; }
-.brand-mark i:nth-child(3) { background: #e1b75c; }
-.brand-mark i:nth-child(4) { background: #6ca6a9; }
 .project-name { display: flex; gap: 12px; align-items: baseline; padding: 0 22px; }
 .eyebrow { margin: 0; font-size: .63rem; letter-spacing: .11em; text-transform: uppercase; color: var(--muted); }
 .project-name strong { font-size: .9rem; }
