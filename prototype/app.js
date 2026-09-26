@@ -58,8 +58,7 @@ const dom = {
   searchInput: document.querySelector('#spatial-search-input'),
   searchResult: document.querySelector('#search-result'),
   searchResultTitle: document.querySelector('#search-result-title'),
-  clearSearch: document.querySelector('#clear-search'),
-  filters: [...document.querySelectorAll('.rail-button')]
+  clearSearch: document.querySelector('#clear-search')
 };
 
 let data = loadData();
@@ -67,7 +66,6 @@ let selectedId = null;
 let selectedConnectionId = null;
 let connectMode = false;
 let connectionStart = null;
-let activeFilter = 'all';
 let saveTimer = null;
 let dragState = null;
 let rewireState = null;
@@ -514,7 +512,6 @@ function renderPlatforms() {
   platformObjects.clear();
   researchArtifacts.length = 0;
   data.platforms.forEach(buildPlatform);
-  applyFilter();
   if (selectedId && platformObjects.has(selectedId)) {
     platformObjects.get(selectedId).selection.visible = true;
   }
@@ -775,14 +772,6 @@ function finishConnect(targetId) {
   setSelected(targetId);
 }
 
-function applyFilter() {
-  platformObjects.forEach(({ group }, id) => {
-    const platform = getPlatform(id);
-    group.visible = activeFilter === 'all' || platform.depth === activeFilter;
-  });
-  connectionLayer.visible = activeFilter === 'all';
-}
-
 function setPointerRay(event) {
   const rect = renderer.domElement.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1005,7 +994,6 @@ dom.depth.addEventListener('change', (event) => {
   const depth = event.target.value;
   updateSelectedPlatform({ depth, color: DEFAULT_COLORS[depth] });
   dom.color.value = DEFAULT_COLORS[depth];
-  applyFilter();
 });
 dom.color.addEventListener('input', (event) => updateSelectedPlatform({ color: event.target.value }));
 dom.connectionLabel.addEventListener('input', (event) => {
@@ -1039,11 +1027,6 @@ dom.deleteConnection.addEventListener('click', () => {
   updateInspector();
   scheduleSave();
 });
-dom.filters.forEach((button) => button.addEventListener('click', () => {
-  activeFilter = button.dataset.view;
-  dom.filters.forEach((item) => item.classList.toggle('active', item === button));
-  applyFilter();
-}));
 dom.search.addEventListener('submit', (event) => {
   event.preventDefault();
   runSpatialSearch(dom.searchInput.value);
