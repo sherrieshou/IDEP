@@ -21,15 +21,11 @@ button { cursor: pointer; }
 .app-shell { height: 100%; display: grid; grid-template-rows: 62px minmax(0, 1fr); }
 .topbar {
   display: grid;
-  grid-template-columns: 160px 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   border-bottom: 1px solid var(--line);
   background: rgba(248, 246, 241, .96);
   z-index: 20;
-}
-.brand {
-  height: 100%; display: flex; align-items: center; padding: 0 22px;
-  border-right: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 720; font-size: 1.18rem;
 }
 .project-name { display: flex; gap: 12px; align-items: baseline; padding: 0 22px; }
 .eyebrow { margin: 0; font-size: .63rem; letter-spacing: .11em; text-transform: uppercase; color: var(--muted); }
@@ -181,8 +177,7 @@ button { cursor: pointer; }
 }
 
 @media (max-width: 680px) {
-  .topbar { grid-template-columns: 116px 1fr auto; }
-  .brand { padding: 0 12px; }
+  .topbar { grid-template-columns: 1fr auto; }
   .project-name .eyebrow, .text-button { display: none; }
   .workspace { grid-template-columns: minmax(0, 1fr); }
   .inspector { position: absolute; right: 10px; top: 74px; bottom: 10px; width: min(280px, calc(100vw - 78px)); box-shadow: 0 8px 30px rgba(0,0,0,.08); transform: translateX(calc(100% + 20px)); transition: transform .2s ease; }
