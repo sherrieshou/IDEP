@@ -54,6 +54,15 @@
       </aside>
 
       <div class="canvas-wrap" id="canvas-wrap">
+        <form class="spatial-search" id="spatial-search" role="search">
+          <span class="search-symbol" aria-hidden="true"></span>
+          <input id="spatial-search-input" type="search" placeholder="Ask about this process…" autocomplete="off" aria-label="Search the spatial process" />
+          <button type="submit">Find</button>
+        </form>
+        <div class="search-result" id="search-result" hidden>
+          <div><span>FOCUSED ON</span><strong id="search-result-title"></strong></div>
+          <button id="clear-search" type="button" aria-label="Clear search and release camera">×</button>
+        </div>
         <div class="canvas-toolbar" aria-label="Canvas tools">
           <button id="connect-platforms" type="button">Connect</button>
           <span class="toolbar-hint" id="toolbar-hint">Drag empty space to orbit · Two-finger scroll to pan · Pinch to zoom</span>

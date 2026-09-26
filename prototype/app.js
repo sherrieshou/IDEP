@@ -54,6 +54,11 @@ const dom = {
   connectionFrom: document.querySelector('#connection-from'),
   connectionTo: document.querySelector('#connection-to'),
   deleteConnection: document.querySelector('#delete-connection'),
+  search: document.querySelector('#spatial-search'),
+  searchInput: document.querySelector('#spatial-search-input'),
+  searchResult: document.querySelector('#search-result'),
+  searchResultTitle: document.querySelector('#search-result-title'),
+  clearSearch: document.querySelector('#clear-search'),
   filters: [...document.querySelectorAll('.rail-button')]
 };
 
@@ -66,6 +71,7 @@ let activeFilter = 'all';
 let saveTimer = null;
 let dragState = null;
 let rewireState = null;
+let focusState = null;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#f8f6f1');
@@ -97,6 +103,7 @@ controls.touches.ONE = THREE.TOUCH.ROTATE;
 controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
 renderer.domElement.addEventListener('wheel', (event) => {
+  if (focusState) clearSearchFocus();
   event.preventDefault();
   event.stopImmediatePropagation();
   const offset = camera.position.clone().sub(controls.target);
@@ -249,6 +256,98 @@ function tagResearchArtifact(object, platformId, meta) {
   object.userData.researchArtifact = meta;
   researchArtifacts.push(object);
   return object;
+}
+
+const SEARCH_ALIASES = {
+  shift: 'direction change departure pivot creative shift 转折 转向 改变方向',
+  frame: 'constraints perspective stimulus lateral thinking reframe framing 约束 重新定义 换角度 刺激',
+  iteration: 'craft sketch critique revision incomplete co creation iterate 迭代 草图 批评 修改 共创',
+  human: 'human loop judge meaningful novelty evaluation 人类 判断 意义 新颖 评估',
+  ownership: 'authorship participation investment feedback ownership 作者 所有权 参与 反馈 归属',
+  audio: 'interview voice recording listen source audio 访谈 音频 声音 录音'
+};
+
+function searchableEntries() {
+  const entries = [];
+  const seen = new Set();
+  researchArtifacts.forEach((object) => {
+    const meta = object.userData.researchArtifact;
+    if (!meta || seen.has(meta.title)) return;
+    seen.add(meta.title);
+    const alias = Object.entries(SEARCH_ALIASES).find(([key]) => meta.title.toLowerCase().includes(key))?.[1] || '';
+    entries.push({
+      title: meta.title,
+      text: `${meta.title} ${meta.body} ${meta.source} ${alias}`.toLowerCase(),
+      object,
+      distance: meta.audio ? 4.8 : 5.8
+    });
+  });
+  data.platforms.forEach((platform) => {
+    const object = platformObjects.get(platform.id)?.group;
+    if (!object) return;
+    entries.push({
+      title: platform.label,
+      text: `${platform.label} ${platform.note} ${platform.depth} platform node 节点 平台`.toLowerCase(),
+      object,
+      platformId: platform.id,
+      distance: 11
+    });
+  });
+  return entries;
+}
+
+function scoreSearch(entry, query) {
+  const clean = query.toLowerCase().trim();
+  if (!clean) return 0;
+  const stopWords = new Set(['the','a','an','is','are','was','were','what','how','why','where','which','who','about','does','did','can','could','show','me','find','this','that','of','to','in','on','and','or','it','i','we','you','我','想','找','关于','什么','怎么','如何','的','是','有','可以']);
+  const terms = clean.match(/[a-z0-9]+|[\u3400-\u9fff]{1,4}/g)?.filter((term) => !stopWords.has(term)) || [];
+  let score = entry.text.includes(clean) ? 12 : 0;
+  terms.forEach((term) => {
+    if (entry.title.toLowerCase().includes(term)) score += 6;
+    else if (entry.text.includes(term)) score += term.length > 2 ? 3 : 1;
+  });
+  return score;
+}
+
+function focusSearchResult(entry) {
+  if (!entry?.object) return;
+  const target = new THREE.Vector3();
+  entry.object.getWorldPosition(target);
+  const viewDirection = camera.position.clone().sub(controls.target).normalize();
+  const offset = viewDirection.multiplyScalar(entry.distance);
+  focusState = {
+    object: entry.object,
+    title: entry.title,
+    offset,
+    startPosition: camera.position.clone(),
+    startTarget: controls.target.clone(),
+    startedAt: performance.now(),
+    duration: 900,
+    animating: true
+  };
+  controls.enabled = false;
+  dom.searchResultTitle.textContent = entry.title;
+  dom.searchResult.hidden = false;
+  if (entry.platformId) setSelected(entry.platformId);
+}
+
+function clearSearchFocus() {
+  focusState = null;
+  controls.enabled = true;
+  dom.searchResult.hidden = true;
+}
+
+function runSpatialSearch(query) {
+  const ranked = searchableEntries()
+    .map((entry) => ({ entry, score: scoreSearch(entry, query) }))
+    .sort((a, b) => b.score - a.score);
+  if (!ranked[0]?.score) {
+    dom.toast.textContent = 'No matching object found';
+    dom.toast.classList.add('visible');
+    window.setTimeout(() => dom.toast.classList.remove('visible'), 1500);
+    return;
+  }
+  focusSearchResult(ranked[0].entry);
 }
 
 function addResearchCollage(group, platform) {
@@ -812,6 +911,7 @@ function endRewire(event) {
 }
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
+  if (focusState) clearSearchFocus();
   const handle = connectionHandleFromPointer(event);
   if (handle) {
     startRewire(event, handle);
@@ -894,6 +994,7 @@ dom.delete.addEventListener('click', deleteSelected);
 dom.connect.addEventListener('click', () => connectMode ? finishConnect(selectedId) : startConnect(false));
 dom.connectSelected.addEventListener('click', () => startConnect(true));
 dom.resetView.addEventListener('click', () => {
+  clearSearchFocus();
   camera.position.set(2, 14, 29);
   controls.target.set(1, 0, 0);
   controls.update();
@@ -943,6 +1044,15 @@ dom.filters.forEach((button) => button.addEventListener('click', () => {
   dom.filters.forEach((item) => item.classList.toggle('active', item === button));
   applyFilter();
 }));
+dom.search.addEventListener('submit', (event) => {
+  event.preventDefault();
+  runSpatialSearch(dom.searchInput.value);
+});
+dom.clearSearch.addEventListener('click', () => {
+  clearSearchFocus();
+  dom.searchInput.value = '';
+  dom.searchInput.focus();
+});
 
 function resize() {
   const { width, height } = dom.scene.getBoundingClientRect();
@@ -954,6 +1064,7 @@ function resize() {
 
 new ResizeObserver(resize).observe(dom.scene);
 window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && focusState) clearSearchFocus();
   if (event.key === 'Escape' && connectMode) {
     connectMode = false;
     connectionStart = null;
@@ -984,6 +1095,23 @@ function animate() {
     artifact.scale.setScalar(pulse);
     if (artifact.material?.emissiveIntensity !== undefined) artifact.material.emissiveIntensity = .28 + Math.sin(time * 3.2) * .12;
   });
+  if (focusState?.object?.parent) {
+    const target = new THREE.Vector3();
+    focusState.object.getWorldPosition(target);
+    if (focusState.animating) {
+      const elapsed = performance.now() - focusState.startedAt;
+      const raw = THREE.MathUtils.clamp(elapsed / focusState.duration, 0, 1);
+      const eased = 1 - Math.pow(1 - raw, 3);
+      controls.target.lerpVectors(focusState.startTarget, target, eased);
+      camera.position.lerpVectors(focusState.startPosition, target.clone().add(focusState.offset), eased);
+      if (raw >= 1) focusState.animating = false;
+    } else {
+      controls.target.copy(target);
+      camera.position.copy(target).add(focusState.offset);
+    }
+  } else if (focusState) {
+    clearSearchFocus();
+  }
   controls.update();
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
