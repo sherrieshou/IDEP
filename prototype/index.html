@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Trace — a spatial map of a designer's creative process." />
+  <title>Trace — Spatial Creative Process</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="../" aria-label="Back to Research Field Notes">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Trace</span>
+      </a>
+      <div class="project-name">
+        <span class="eyebrow">Project</span>
+        <strong>3D Agent Study</strong>
+      </div>
+      <div class="top-actions">
+        <button class="text-button" id="reset-view" type="button">Reset view</button>
+        <button class="primary-button" id="add-platform" type="button">＋ Platform</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="left-rail" aria-label="Workspace controls">
+        <div>
+          <p class="rail-title">View</p>
+          <button class="rail-button active" type="button" data-view="all"><span class="rail-icon circle"></span>All</button>
+          <button class="rail-button" type="button" data-view="research"><span class="rail-icon square"></span>Research</button>
+          <button class="rail-button" type="button" data-view="exploration"><span class="rail-icon triangle"></span>Exploration</button>
+          <button class="rail-button" type="button" data-view="prototype"><span class="rail-icon hexagon"></span>Prototype</button>
+        </div>
+        <div class="legend">
+          <p class="rail-title">Depth</p>
+          <p><i style="--dot:#93d7e2"></i>Research</p>
+          <p><i style="--dot:#f0c399"></i>Exploration</p>
+          <p><i style="--dot:#e9aebc"></i>Prototype</p>
+          <p><i style="--dot:#c49ac7"></i>Final</p>
+        </div>
+        <div class="mode-switch" role="group" aria-label="Canvas mode">
+          <button type="button">2D</button>
+          <button class="active" type="button">Spatial</button>
+        </div>
+      </aside>
+
+      <div class="canvas-wrap" id="canvas-wrap">
+        <div class="canvas-toolbar" aria-label="Canvas tools">
+          <button id="connect-platforms" type="button">Connect</button>
+          <span class="toolbar-hint" id="toolbar-hint">Drag to orbit · Scroll to zoom</span>
+        </div>
+        <div id="scene" aria-label="Interactive spatial process map"></div>
+        <div class="connect-toast" id="connect-toast" role="status" aria-live="polite"></div>
+      </div>
+
+      <aside class="inspector" id="inspector">
+        <div class="inspector-empty" id="inspector-empty">
+          <div class="empty-shape"></div>
+          <h2>Select a platform</h2>
+          <p>Choose a platform to edit its label, depth, color, and connections.</p>
+        </div>
+
+        <form class="inspector-form" id="inspector-form" hidden>
+          <div class="inspector-heading">
+            <span class="selected-swatch" id="selected-swatch"></span>
+            <div>
+              <p class="eyebrow">Selected platform</p>
+              <h2 id="selected-title">Platform</h2>
+            </div>
+          </div>
+
+          <label>
+            <span>Label</span>
+            <input id="platform-label" name="label" type="text" maxlength="48" autocomplete="off" />
+          </label>
+          <label>
+            <span>Annotation</span>
+            <textarea id="platform-note" name="note" rows="3" maxlength="140"></textarea>
+          </label>
+          <div class="field-row">
+            <label>
+              <span>Depth</span>
+              <select id="platform-depth" name="depth">
+                <option value="research">Research</option>
+                <option value="exploration">Exploration</option>
+                <option value="prototype">Prototype</option>
+                <option value="final">Final</option>
+              </select>
+            </label>
+            <label>
+              <span>Color</span>
+              <input id="platform-color" name="color" type="color" />
+            </label>
+          </div>
+
+          <div class="connections-panel">
+            <div class="panel-heading">
+              <span>Connections</span>
+              <button class="inline-button" id="connect-from-selected" type="button">＋ Add</button>
+            </div>
+            <div id="connection-list" class="connection-list"></div>
+          </div>
+
+          <button class="danger-button" id="delete-platform" type="button">Delete platform</button>
+        </form>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
