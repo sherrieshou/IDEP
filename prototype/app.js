@@ -150,6 +150,7 @@ const ANCHOR_POINTS = [
 const platformObjects = new Map();
 const connectionObjects = new Map();
 const researchArtifacts = [];
+const movingAgents = [];
 let hoveredArtifact = null;
 
 const artifactTooltip = document.createElement('div');
@@ -428,6 +429,89 @@ function addResearchCollage(group, platform) {
   group.add(waveform);
 }
 
+function addCollaborationLandscape(group, platform) {
+  const accounts = [
+    ['@latent_paths', 3, 'Peer'], ['@open_worlds', 8, 'Growing'], ['@agent_sketches', 5, 'Peer'],
+    ['@modelgardens', 12, 'Growing'], ['@creative_eval', 6, 'Peer'], ['@worldsim_lab', 17, 'Big thinker'],
+    ['@tooluse_notes', 4, 'Peer'], ['@embodiedloops', 9, 'Growing'], ['@cocreate_daily', 7, 'Growing'],
+    ['@processnotoutput', 14, 'Big thinker'], ['@spatial_agents', 10, 'Growing'], ['@novelty_trails', 2, 'Peer']
+  ];
+  const positions = [
+    [-2.5,-1.25],[-1.25,-1.65],[.05,-1.4],[1.35,-1.55],[2.5,-1.05],
+    [-2.15,.05],[-.85,-.05],[.5,.1],[1.85,.15],
+    [-1.5,1.25],[0,1.35],[1.55,1.15]
+  ];
+  accounts.forEach(([handle, replies, tier], index) => {
+    const height = .24 + replies * .045;
+    const shade = 0.83 - Math.min(replies, 18) * .018;
+    const color = new THREE.Color(shade, shade, shade);
+    const meta = {
+      type: 'X ACCOUNT · SIMULATED',
+      title: handle,
+      body: `${replies} replies in the current observation window · ${tier} list`,
+      source: 'Prototype placeholder · replace with connected X data'
+    };
+    const block = tagResearchArtifact(new THREE.Mesh(
+      new THREE.BoxGeometry(.52, height, .52),
+      new THREE.MeshPhysicalMaterial({ color, roughness: .72, metalness: .03 })
+    ), platform.id, meta);
+    block.position.set(positions[index][0], .18 + height / 2, positions[index][1]);
+    block.rotation.y = (index % 3 - 1) * .09;
+    group.add(block);
+
+    const cap = tagResearchArtifact(new THREE.Mesh(
+      new THREE.BoxGeometry(.38, .025, .38),
+      new THREE.MeshBasicMaterial({ color: replies > 10 ? '#4b4b4b' : '#777777' })
+    ), platform.id, meta);
+    cap.position.set(block.position.x, block.position.y + height / 2 + .018, block.position.z);
+    cap.rotation.y = block.rotation.y;
+    group.add(cap);
+  });
+
+  const pathPoints = Array.from({ length: 96 }, (_, index) => {
+    const angle = index / 96 * Math.PI * 2;
+    return new THREE.Vector3(Math.cos(angle) * 3.15, .21, Math.sin(angle) * 1.95);
+  });
+  const path = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(pathPoints),
+    new THREE.LineDashedMaterial({ color: '#8e8e8e', dashSize: .12, gapSize: .13, transparent: true, opacity: .42 })
+  );
+  path.computeLineDistances();
+  group.add(path);
+
+  const personMeta = {
+    type: 'BACKGROUND AGENT',
+    title: 'Community scout',
+    body: 'A lightweight agent moves between followed accounts and observes where conversations are becoming active.',
+    source: 'Prototype behavior · simulated community monitoring'
+  };
+  const person = new THREE.Group();
+  person.userData.walkOffset = .7;
+  const body = tagResearchArtifact(new THREE.Mesh(
+    new THREE.CapsuleGeometry(.15, .34, 5, 12),
+    new THREE.MeshStandardMaterial({ color: '#4d4d4d', roughness: .7 })
+  ), platform.id, personMeta);
+  body.position.y = .52;
+  const head = tagResearchArtifact(new THREE.Mesh(
+    new THREE.SphereGeometry(.13, 18, 18),
+    new THREE.MeshStandardMaterial({ color: '#bcbcbc', roughness: .68 })
+  ), platform.id, personMeta);
+  head.position.y = .91;
+  const leftLeg = tagResearchArtifact(new THREE.Mesh(
+    new THREE.CapsuleGeometry(.045, .25, 4, 8),
+    new THREE.MeshStandardMaterial({ color: '#656565', roughness: .8 })
+  ), platform.id, personMeta);
+  const rightLeg = leftLeg.clone();
+  rightLeg.userData = { ...leftLeg.userData };
+  researchArtifacts.push(rightLeg);
+  leftLeg.position.set(-.07, .22, 0);
+  rightLeg.position.set(.07, .22, 0);
+  person.add(body, head, leftLeg, rightLeg);
+  person.position.set(3.15, .13, 0);
+  group.add(person);
+  movingAgents.push({ group: person, leftLeg, rightLeg, radiusX: 3.15, radiusZ: 1.95, speed: .22, offset: .7 });
+}
+
 function buildPlatform(platform) {
   const group = new THREE.Group();
   group.position.fromArray(platform.position);
@@ -502,6 +586,7 @@ function buildPlatform(platform) {
   const label = makeLabel(platform);
   group.add(label);
   if (platform.id === 'research') addResearchCollage(group, platform);
+  if (platform.id === 'collab') addCollaborationLandscape(group, platform);
   platformLayer.add(group);
   const artifactTargets = [];
   group.traverse((object) => { if (object.userData.researchArtifact) artifactTargets.push(object); });
@@ -524,6 +609,7 @@ function renderPlatforms() {
   clearGroup(platformLayer);
   platformObjects.clear();
   researchArtifacts.length = 0;
+  movingAgents.length = 0;
   data.platforms.forEach(buildPlatform);
   if (selectedId && platformObjects.has(selectedId)) {
     platformObjects.get(selectedId).selection.visible = true;
@@ -1090,6 +1176,15 @@ function animate() {
     const pulse = 1 + Math.sin(time * 3.2) * .08;
     artifact.scale.setScalar(pulse);
     if (artifact.material?.emissiveIntensity !== undefined) artifact.material.emissiveIntensity = .28 + Math.sin(time * 3.2) * .12;
+  });
+  movingAgents.forEach((agent) => {
+    const angle = time * agent.speed + agent.offset;
+    agent.group.position.x = Math.cos(angle) * agent.radiusX;
+    agent.group.position.z = Math.sin(angle) * agent.radiusZ;
+    agent.group.rotation.y = -angle + Math.PI / 2;
+    agent.group.position.y = .13 + Math.abs(Math.sin(time * 4.6)) * .025;
+    agent.leftLeg.rotation.x = Math.sin(time * 4.6) * .48;
+    agent.rightLeg.rotation.x = -Math.sin(time * 4.6) * .48;
   });
   if (focusState?.object?.parent) {
     const target = new THREE.Vector3();
