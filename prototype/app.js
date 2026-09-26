@@ -136,6 +136,16 @@ const ANCHOR_POINTS = [
 ];
 const platformObjects = new Map();
 const connectionObjects = new Map();
+const researchArtifacts = [];
+let hoveredArtifact = null;
+
+const artifactTooltip = document.createElement('div');
+artifactTooltip.className = 'artifact-tooltip';
+artifactTooltip.hidden = true;
+artifactTooltip.innerHTML = '<span></span><strong></strong><p></p><small></small>';
+dom.canvasWrap.appendChild(artifactTooltip);
+
+const RESEARCH_AUDIO = 'Creativity, the creative craft, is iteration. A sketch invites critique. A creative shift may emerge when a person reframes the constraints.';
 
 function loadData() {
   try {
@@ -164,6 +174,148 @@ function makeLabel(platform) {
   label.position.set(0, -.28, 2.35);
   label.userData.element = element;
   return label;
+}
+
+function makeResearchTexture(kind, colors) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 640;
+  canvas.height = 440;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f3f0e9';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#292a28';
+  ctx.fillStyle = colors[0];
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (kind === 'shift') {
+    ctx.globalAlpha = .88;
+    ctx.beginPath();
+    ctx.moveTo(70, 335);
+    ctx.bezierCurveTo(180, 320, 250, 245, 305, 215);
+    ctx.bezierCurveTo(380, 170, 425, 100, 565, 82);
+    ctx.stroke();
+    ctx.globalAlpha = .3;
+    ctx.beginPath();
+    ctx.moveTo(70, 335);
+    ctx.bezierCurveTo(210, 365, 325, 335, 565, 350);
+    ctx.stroke();
+    [[70,335],[305,215],[565,82]].forEach(([x,y], i) => {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath(); ctx.arc(x, y, i === 1 ? 22 : 13, 0, Math.PI * 2); ctx.fill();
+    });
+  } else if (kind === 'frame') {
+    ctx.translate(320, 220);
+    [[-118,-84,236,168,0],[-83,-118,166,236,.28],[-48,-62,96,124,-.18]].forEach(([x,y,w,h,r], i) => {
+      ctx.save(); ctx.rotate(r); ctx.strokeStyle = i === 2 ? colors[1] : '#292a28'; ctx.globalAlpha = .88 - i * .2;
+      ctx.strokeRect(x,y,w,h); ctx.restore();
+    });
+    ctx.fillStyle = colors[0]; ctx.globalAlpha = .82;
+    ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
+  } else if (kind === 'iteration') {
+    for (let i = 0; i < 5; i += 1) {
+      const x = 82 + i * 112;
+      ctx.globalAlpha = .18 + i * .17;
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.moveTo(x - 42, 290 - i * 15);
+      ctx.bezierCurveTo(x - 58, 178, x + 36, 118 + i * 10, x + 44, 284 - i * 13);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = .65;
+      ctx.strokeStyle = '#292a28'; ctx.stroke();
+    }
+  } else if (kind === 'human') {
+    const nodes = [[105,280],[190,115],[285,240],[382,85],[520,220],[470,345],[255,350]];
+    ctx.strokeStyle = colors[1]; ctx.globalAlpha = .42;
+    [[0,1],[1,2],[2,3],[2,4],[4,5],[5,6],[6,2]].forEach(([a,b]) => {
+      ctx.beginPath(); ctx.moveTo(...nodes[a]); ctx.lineTo(...nodes[b]); ctx.stroke();
+    });
+    nodes.forEach(([x,y], i) => {
+      ctx.globalAlpha = 1; ctx.fillStyle = i % 2 ? colors[0] : colors[2];
+      ctx.beginPath(); ctx.arc(x,y,i === 2 ? 28 : 14,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#292a28'; ctx.stroke();
+    });
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return texture;
+}
+
+function tagResearchArtifact(object, platformId, meta) {
+  object.userData.platformId = platformId;
+  object.userData.researchArtifact = meta;
+  researchArtifacts.push(object);
+  return object;
+}
+
+function addResearchCollage(group, platform) {
+  const palette = ['#ee8b72', '#6abac8', '#d6be52'];
+  const cards = [
+    { kind: 'shift', position: [-2.15, 1.35, -.25], rotation: [-.12, .1, -.08], size: [2.45, 1.68], meta: { type: 'VISUAL NOTE 01', title: 'Creative shift', body: 'A meaningful moment is the point where the designer changes direction, not only the quality of the final artifact.', source: 'Antonios Liapis interview · creative-shift evaluation' } },
+    { kind: 'frame', position: [.15, 2.05, -.7], rotation: [-.06, -.16, .05], size: [2.05, 1.42], meta: { type: 'VISUAL NOTE 02', title: 'Frame and reframe', body: 'A stimulus becomes useful when it changes the constraints through which the problem is understood.', source: 'Antonios Liapis interview · lateral thinking and reframing' } },
+    { kind: 'iteration', position: [2.05, 1.25, .25], rotation: [-.1, -.08, .09], size: [2.6, 1.78], meta: { type: 'VISUAL NOTE 03', title: 'Iteration is the craft', body: 'An incomplete sketch invites critique, revision, and ownership. A polished final answer often closes that loop.', source: 'Antonios Liapis interview · sketching and co-creation' } },
+    { kind: 'human', position: [-.55, .78, 1.3], rotation: [-.22, .16, -.02], size: [2.25, 1.55], meta: { type: 'VISUAL NOTE 04', title: 'Human in the loop', body: 'Human interpretation is needed to judge whether novelty is meaningful and whether a contribution changed the process.', source: 'Antonios Liapis interview · human evaluation' } }
+  ];
+
+  cards.forEach((card, index) => {
+    const material = new THREE.MeshBasicMaterial({
+      map: makeResearchTexture(card.kind, palette),
+      transparent: true,
+      opacity: .92,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const mesh = tagResearchArtifact(new THREE.Mesh(new THREE.PlaneGeometry(...card.size), material), platform.id, card.meta);
+    mesh.position.set(...card.position);
+    mesh.rotation.set(...card.rotation);
+    mesh.renderOrder = 5 + index;
+    group.add(mesh);
+  });
+
+  const steppingMeta = { type: '3D OBJECT', title: 'Stepping stones', body: 'An AI suggestion can be ignored as an answer yet still become a stepping stone toward a later idea.', source: 'Antonios Liapis interview · mixed-initiative co-creativity' };
+  for (let i = 0; i < 5; i += 1) {
+    const stone = tagResearchArtifact(new THREE.Mesh(
+      new THREE.CylinderGeometry(.22 + i * .025, .3, .12 + i * .09, 6),
+      new THREE.MeshPhysicalMaterial({ color: i % 2 ? '#d8a29a' : '#d9c35c', roughness: .78 })
+    ), platform.id, steppingMeta);
+    stone.position.set(-2.25 + i * .58, .28 + i * .17, 1.25 - i * .18);
+    stone.rotation.y = i * .38;
+    group.add(stone);
+  }
+
+  const ownershipMeta = { type: '3D OBJECT', title: 'Ownership gap', body: 'Giving feedback can create investment without creating authorship. Participation and ownership are different.', source: 'Antonios Liapis interview · game-in-a-day study' };
+  const ownership = tagResearchArtifact(new THREE.Group(), platform.id, ownershipMeta);
+  const torusA = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.5), new THREE.MeshStandardMaterial({ color: '#bd5264', roughness: .55 }));
+  const torusB = new THREE.Mesh(new THREE.TorusGeometry(.48, .075, 12, 50, Math.PI * 1.35), new THREE.MeshStandardMaterial({ color: '#547f71', roughness: .55 }));
+  torusA.rotation.x = Math.PI / 2; torusB.rotation.x = Math.PI / 2; torusB.rotation.z = Math.PI;
+  torusA.position.x = -.25; torusB.position.x = .25;
+  ownership.add(torusA, torusB);
+  ownership.position.set(2.6, .62, -1.15);
+  ownership.rotation.y = -.25;
+  ownership.traverse((child) => { if (child.isMesh) { child.userData.platformId = platform.id; child.userData.researchArtifact = ownershipMeta; researchArtifacts.push(child); } });
+  group.add(ownership);
+
+  const audioMeta = { type: 'AUDIO SOURCE', title: 'Interview fragment', body: 'Click to hear a short spoken synthesis of the interview segment that anchors this visual cluster.', source: 'Antonios Liapis interview · September 21, 2026' };
+  const audio = tagResearchArtifact(new THREE.Mesh(
+    new THREE.SphereGeometry(.25, 28, 28),
+    new THREE.MeshPhysicalMaterial({ color: '#2f302d', emissive: '#53232c', emissiveIntensity: .25, roughness: .38 })
+  ), platform.id, { ...audioMeta, audio: true });
+  audio.position.set(-3.05, .48, -.95);
+  audio.userData.audioPulse = true;
+  group.add(audio);
+  const wavePoints = Array.from({ length: 72 }, (_, i) => {
+    const x = -2.75 + i * .07;
+    const amplitude = .08 + .17 * Math.sin(i * .37) ** 2;
+    return new THREE.Vector3(x, .48 + Math.sin(i * .92) * amplitude, -.95);
+  });
+  const waveform = tagResearchArtifact(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(wavePoints),
+    new THREE.LineBasicMaterial({ color: '#652c39', transparent: true, opacity: .72 })
+  ), platform.id, audioMeta);
+  group.add(waveform);
 }
 
 function buildPlatform(platform) {
@@ -239,8 +391,11 @@ function buildPlatform(platform) {
 
   const label = makeLabel(platform);
   group.add(label);
+  if (platform.id === 'research') addResearchCollage(group, platform);
   platformLayer.add(group);
-  platformObjects.set(platform.id, { group, disc, outline, selection, anchorGroup, label, material, outlineMaterial });
+  const artifactTargets = [];
+  group.traverse((object) => { if (object.userData.researchArtifact) artifactTargets.push(object); });
+  platformObjects.set(platform.id, { group, disc, outline, selection, anchorGroup, label, material, outlineMaterial, artifactTargets });
 }
 
 function clearGroup(group) {
@@ -258,6 +413,7 @@ function clearGroup(group) {
 function renderPlatforms() {
   clearGroup(platformLayer);
   platformObjects.clear();
+  researchArtifacts.length = 0;
   data.platforms.forEach(buildPlatform);
   applyFilter();
   if (selectedId && platformObjects.has(selectedId)) {
@@ -537,7 +693,7 @@ function setPointerRay(event) {
 
 function platformFromPointer(event) {
   setPointerRay(event);
-  const targets = [...platformObjects.values()].flatMap(({ disc, outline, anchorGroup }) => [disc, outline, ...anchorGroup.children]);
+  const targets = [...platformObjects.values()].flatMap(({ disc, outline, anchorGroup, artifactTargets = [] }) => [disc, outline, ...anchorGroup.children, ...artifactTargets]);
   const hit = raycaster.intersectObjects(targets, false)[0];
   return hit?.object.userData.platformId || null;
 }
@@ -553,6 +709,47 @@ function connectionFromPointer(event) {
   setPointerRay(event);
   const hitTargets = [...connectionObjects.values()].map((objects) => objects.hitTube);
   return raycaster.intersectObjects(hitTargets, false)[0]?.object.userData.connectionId || null;
+}
+
+function artifactFromPointer(event) {
+  setPointerRay(event);
+  raycaster.params.Line.threshold = .08;
+  return raycaster.intersectObjects(researchArtifacts.filter((object) => object.isMesh || object.isLine), false)[0]?.object || null;
+}
+
+function showArtifactTooltip(event, artifact) {
+  const meta = artifact?.userData.researchArtifact;
+  if (!meta) {
+    artifactTooltip.hidden = true;
+    hoveredArtifact = null;
+    renderer.domElement.style.cursor = '';
+    return;
+  }
+  hoveredArtifact = artifact;
+  artifactTooltip.querySelector('span').textContent = meta.type;
+  artifactTooltip.querySelector('strong').textContent = meta.title;
+  artifactTooltip.querySelector('p').textContent = meta.body;
+  artifactTooltip.querySelector('small').textContent = meta.source;
+  artifactTooltip.hidden = false;
+  const bounds = dom.canvasWrap.getBoundingClientRect();
+  const tooltipWidth = 270;
+  const x = Math.min(event.clientX - bounds.left + 18, bounds.width - tooltipWidth - 16);
+  const y = Math.min(event.clientY - bounds.top + 18, bounds.height - 170);
+  artifactTooltip.style.transform = `translate(${Math.max(12, x)}px, ${Math.max(12, y)}px)`;
+  renderer.domElement.style.cursor = meta.audio ? 'pointer' : 'help';
+}
+
+function speakResearchAudio() {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(RESEARCH_AUDIO);
+  utterance.rate = .9;
+  utterance.pitch = .92;
+  utterance.volume = .82;
+  window.speechSynthesis.speak(utterance);
+  dom.toast.textContent = 'Playing interview synthesis';
+  dom.toast.classList.add('visible');
+  utterance.addEventListener('end', () => dom.toast.classList.remove('visible'));
 }
 
 function startRewire(event, handle) {
@@ -654,7 +851,11 @@ renderer.domElement.addEventListener('pointermove', (event) => {
     updateRewire(event);
     return;
   }
-  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  if (!dragState || event.pointerId !== dragState.pointerId) {
+    showArtifactTooltip(event, artifactFromPointer(event));
+    return;
+  }
+  artifactTooltip.hidden = true;
   const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
   if (distance > 3) dragState.moved = true;
   if (!dragState.moved) return;
@@ -682,6 +883,11 @@ function endPlatformDrag(event) {
 
 renderer.domElement.addEventListener('pointerup', endPlatformDrag);
 renderer.domElement.addEventListener('pointercancel', endPlatformDrag);
+renderer.domElement.addEventListener('pointerleave', () => showArtifactTooltip(null, null));
+renderer.domElement.addEventListener('click', (event) => {
+  const artifact = artifactFromPointer(event);
+  if (artifact?.userData.researchArtifact?.audio) speakResearchAudio();
+});
 
 dom.add.addEventListener('click', addPlatform);
 dom.delete.addEventListener('click', deleteSelected);
@@ -771,6 +977,13 @@ resize();
 
 function animate() {
   requestAnimationFrame(animate);
+  const time = performance.now() * .001;
+  researchArtifacts.forEach((artifact) => {
+    if (!artifact.userData.audioPulse) return;
+    const pulse = 1 + Math.sin(time * 3.2) * .08;
+    artifact.scale.setScalar(pulse);
+    if (artifact.material?.emissiveIntensity !== undefined) artifact.material.emissiveIntensity = .28 + Math.sin(time * 3.2) * .12;
+  });
   controls.update();
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
