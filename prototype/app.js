@@ -20,12 +20,12 @@ const initialData = {
     { id: 'final', label: 'Final direction', note: 'Selected path', depth: 'final', color: '#c49ac7', position: [9.2, -.5, -.5] }
   ],
   connections: [
-    { id: 'c1', from: 'brief', to: 'research' },
-    { id: 'c2', from: 'brief', to: 'explore' },
-    { id: 'c3', from: 'research', to: 'collab' },
-    { id: 'c4', from: 'explore', to: 'prototype' },
-    { id: 'c5', from: 'collab', to: 'final' },
-    { id: 'c6', from: 'prototype', to: 'final' }
+    { id: 'c1', from: 'brief', to: 'research', label: 'AI research' },
+    { id: 'c2', from: 'brief', to: 'explore', label: 'Sketching' },
+    { id: 'c3', from: 'research', to: 'collab', label: 'Izzy feedback' },
+    { id: 'c4', from: 'explore', to: 'prototype', label: 'Prototype' },
+    { id: 'c5', from: 'collab', to: 'final', label: 'Learnings merge' },
+    { id: 'c6', from: 'prototype', to: 'final', label: 'User test' }
   ]
 };
 
@@ -40,6 +40,7 @@ const dom = {
   inspector: document.querySelector('#inspector'),
   empty: document.querySelector('#inspector-empty'),
   form: document.querySelector('#inspector-form'),
+  connectionForm: document.querySelector('#connection-form'),
   title: document.querySelector('#selected-title'),
   swatch: document.querySelector('#selected-swatch'),
   label: document.querySelector('#platform-label'),
@@ -48,16 +49,23 @@ const dom = {
   color: document.querySelector('#platform-color'),
   connections: document.querySelector('#connection-list'),
   delete: document.querySelector('#delete-platform'),
+  connectionTitle: document.querySelector('#selected-connection-title'),
+  connectionLabel: document.querySelector('#connection-label'),
+  connectionFrom: document.querySelector('#connection-from'),
+  connectionTo: document.querySelector('#connection-to'),
+  deleteConnection: document.querySelector('#delete-connection'),
   filters: [...document.querySelectorAll('.rail-button')]
 };
 
 let data = loadData();
 let selectedId = null;
+let selectedConnectionId = null;
 let connectMode = false;
 let connectionStart = null;
 let activeFilter = 'all';
 let saveTimer = null;
 let dragState = null;
+let rewireState = null;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#f8f6f1');
@@ -84,6 +92,28 @@ controls.dampingFactor = .08;
 controls.minDistance = 10;
 controls.maxDistance = 55;
 controls.target.set(1, 0, 0);
+controls.screenSpacePanning = true;
+controls.touches.ONE = THREE.TOUCH.ROTATE;
+controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
+
+renderer.domElement.addEventListener('wheel', (event) => {
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const offset = camera.position.clone().sub(controls.target);
+  const distance = offset.length();
+  if (event.ctrlKey) {
+    const nextDistance = THREE.MathUtils.clamp(distance * Math.exp(event.deltaY * .008), controls.minDistance, controls.maxDistance);
+    camera.position.copy(controls.target).add(offset.normalize().multiplyScalar(nextDistance));
+  } else {
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+    const scale = distance * .00115;
+    const pan = right.multiplyScalar(-event.deltaX * scale).add(up.multiplyScalar(event.deltaY * scale));
+    camera.position.add(pan);
+    controls.target.add(pan);
+  }
+  controls.update();
+}, { capture: true, passive: false });
 
 scene.add(new THREE.HemisphereLight('#ffffff', '#c7c2b7', 2.1));
 const keyLight = new THREE.DirectionalLight('#ffffff', 2.4);
@@ -98,6 +128,12 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const dragPlane = new THREE.Plane();
 const dragIntersection = new THREE.Vector3();
+const ANCHOR_POINTS = [
+  new THREE.Vector3(-4.25, .16, 0),
+  new THREE.Vector3(4.25, .16, 0),
+  new THREE.Vector3(0, .16, -2.89),
+  new THREE.Vector3(0, .16, 2.89)
+];
 const platformObjects = new Map();
 const connectionObjects = new Map();
 
@@ -230,16 +266,10 @@ function renderPlatforms() {
 }
 
 function anchorPair(fromObject, toObject) {
-  const localAnchors = [
-    new THREE.Vector3(-4.25, .16, 0),
-    new THREE.Vector3(4.25, .16, 0),
-    new THREE.Vector3(0, .16, -2.89),
-    new THREE.Vector3(0, .16, 2.89)
-  ];
   let best = null;
-  localAnchors.forEach((fromLocal, fromIndex) => {
+  ANCHOR_POINTS.forEach((fromLocal, fromIndex) => {
     const from = fromObject.localToWorld(fromLocal.clone());
-    localAnchors.forEach((toLocal, toIndex) => {
+    ANCHOR_POINTS.forEach((toLocal, toIndex) => {
       const to = toObject.localToWorld(toLocal.clone());
       const distance = from.distanceToSquared(to);
       if (!best || distance < best.distance) best = { from, to, fromIndex, toIndex, distance };
@@ -248,22 +278,40 @@ function anchorPair(fromObject, toObject) {
   return best;
 }
 
+function closestAnchor(object, point) {
+  return ANCHOR_POINTS
+    .map((local, index) => ({ index, point: object.localToWorld(local.clone()) }))
+    .sort((a, b) => a.point.distanceToSquared(point) - b.point.distanceToSquared(point))[0];
+}
+
 function buildArrow(connection) {
   const fromObject = platformObjects.get(connection.from)?.group;
   const toObject = platformObjects.get(connection.to)?.group;
   if (!fromObject || !toObject) return;
   const snapped = anchorPair(fromObject, toObject);
-  const from = snapped.from;
-  const to = snapped.to;
+  const from = rewireState?.connectionId === connection.id && rewireState.endpoint === 'from'
+    ? rewireState.previewPoint.clone()
+    : snapped.from;
+  const to = rewireState?.connectionId === connection.id && rewireState.endpoint === 'to'
+    ? rewireState.previewPoint.clone()
+    : snapped.to;
   const delta = to.clone().sub(from);
   const midpoint = from.clone().lerp(to, .5);
   midpoint.y += Math.min(2.2, .75 + delta.length() * .08);
   midpoint.z += delta.x >= 0 ? .5 : -.5;
   const curve = new THREE.QuadraticBezierCurve3(from, midpoint, to);
-  const material = new THREE.MeshBasicMaterial({ color: '#a43b4a', transparent: true, opacity: .85 });
-  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 34, .035, 7, false), material);
+  const selected = connection.id === selectedConnectionId;
+  const material = new THREE.MeshBasicMaterial({ color: selected ? '#7f2535' : '#a43b4a', transparent: true, opacity: selected ? 1 : .82 });
+  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 34, selected ? .055 : .035, 7, false), material);
   tube.userData.connectionId = connection.id;
   connectionLayer.add(tube);
+
+  const hitTube = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 24, .18, 6, false),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+  );
+  hitTube.userData.connectionId = connection.id;
+  connectionLayer.add(hitTube);
 
   const tangent = curve.getTangent(1).normalize();
   const cone = new THREE.Mesh(new THREE.ConeGeometry(.14, .48, 16), material.clone());
@@ -271,7 +319,34 @@ function buildArrow(connection) {
   cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
   cone.userData.connectionId = connection.id;
   connectionLayer.add(cone);
-  connectionObjects.set(connection.id, { tube, cone });
+
+  let label = null;
+  if (connection.label) {
+    const element = document.createElement('div');
+    element.className = 'connection-label';
+    element.textContent = connection.label;
+    label = new CSS2DObject(element);
+    label.position.copy(curve.getPoint(.5));
+    label.position.y += .22;
+    connectionLayer.add(label);
+  }
+
+  const handles = [];
+  if (selected) {
+    [['from', from], ['to', to]].forEach(([endpoint, position]) => {
+      const handle = new THREE.Mesh(
+        new THREE.SphereGeometry(.2, 20, 20),
+        new THREE.MeshBasicMaterial({ color: '#f8f6f1', depthTest: false })
+      );
+      handle.position.copy(position);
+      handle.renderOrder = 30;
+      handle.userData.connectionId = connection.id;
+      handle.userData.endpoint = endpoint;
+      connectionLayer.add(handle);
+      handles.push(handle);
+    });
+  }
+  connectionObjects.set(connection.id, { tube, hitTube, cone, label, handles });
 }
 
 function renderConnections() {
@@ -288,6 +363,7 @@ function renderAll() {
 
 function setSelected(id) {
   selectedId = id;
+  selectedConnectionId = null;
   platformObjects.forEach(({ selection, anchorGroup, label }, platformId) => {
     selection.visible = platformId === id;
     anchorGroup.visible = connectMode || platformId === id;
@@ -297,10 +373,29 @@ function setSelected(id) {
   if (window.innerWidth <= 680) dom.inspector.classList.toggle('open', Boolean(id));
 }
 
+function setSelectedConnection(id) {
+  selectedConnectionId = id;
+  selectedId = null;
+  platformObjects.forEach(({ selection, anchorGroup, label }) => {
+    selection.visible = false;
+    anchorGroup.visible = false;
+    label.userData.element.classList.remove('selected');
+  });
+  renderConnections();
+  updateInspector();
+  if (window.innerWidth <= 680) dom.inspector.classList.toggle('open', Boolean(id));
+}
+
 function updateInspector() {
   const platform = getPlatform(selectedId);
-  dom.empty.hidden = Boolean(platform);
+  const connection = data.connections.find((item) => item.id === selectedConnectionId);
+  dom.empty.hidden = Boolean(platform || connection);
   dom.form.hidden = !platform;
+  dom.connectionForm.hidden = !connection;
+  if (connection) {
+    renderConnectionInspector(connection);
+    return;
+  }
   if (!platform) return;
   dom.title.textContent = platform.label;
   dom.swatch.style.background = platform.color;
@@ -309,6 +404,23 @@ function updateInspector() {
   dom.depth.value = platform.depth;
   dom.color.value = platform.color;
   renderConnectionList();
+}
+
+function renderConnectionInspector(connection) {
+  const from = getPlatform(connection.from);
+  const to = getPlatform(connection.to);
+  dom.connectionTitle.textContent = `${from?.label || 'Unknown'} → ${to?.label || 'Unknown'}`;
+  dom.connectionLabel.value = connection.label || '';
+  const options = data.platforms.map((platform) => {
+    const option = document.createElement('option');
+    option.value = platform.id;
+    option.textContent = platform.label;
+    return option;
+  });
+  dom.connectionFrom.replaceChildren(...options.map((option) => option.cloneNode(true)));
+  dom.connectionTo.replaceChildren(...options.map((option) => option.cloneNode(true)));
+  dom.connectionFrom.value = connection.from;
+  dom.connectionTo.value = connection.to;
 }
 
 function renderConnectionList() {
@@ -397,7 +509,7 @@ function finishConnect(targetId) {
     return;
   }
   if (targetId !== connectionStart && !data.connections.some((item) => item.from === connectionStart && item.to === targetId)) {
-    data.connections.push({ id: `connection-${Date.now()}`, from: connectionStart, to: targetId });
+    data.connections.push({ id: `connection-${Date.now()}`, from: connectionStart, to: targetId, label: '' });
     renderConnections();
     scheduleSave();
   }
@@ -416,24 +528,107 @@ function applyFilter() {
   connectionLayer.visible = activeFilter === 'all';
 }
 
-function platformFromPointer(event) {
+function setPointerRay(event) {
   const rect = renderer.domElement.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
+}
+
+function platformFromPointer(event) {
+  setPointerRay(event);
   const targets = [...platformObjects.values()].flatMap(({ disc, outline, anchorGroup }) => [disc, outline, ...anchorGroup.children]);
   const hit = raycaster.intersectObjects(targets, false)[0];
   return hit?.object.userData.platformId || null;
 }
 
+function connectionHandleFromPointer(event) {
+  setPointerRay(event);
+  const handles = [...connectionObjects.values()].flatMap((objects) => objects.handles || []);
+  const hit = raycaster.intersectObjects(handles, false)[0]?.object;
+  return hit ? { connectionId: hit.userData.connectionId, endpoint: hit.userData.endpoint } : null;
+}
+
+function connectionFromPointer(event) {
+  setPointerRay(event);
+  const hitTargets = [...connectionObjects.values()].map((objects) => objects.hitTube);
+  return raycaster.intersectObjects(hitTargets, false)[0]?.object.userData.connectionId || null;
+}
+
+function startRewire(event, handle) {
+  const connection = data.connections.find((item) => item.id === handle.connectionId);
+  if (!connection) return;
+  setSelectedConnection(connection.id);
+  const fromObject = platformObjects.get(connection.from)?.group;
+  const toObject = platformObjects.get(connection.to)?.group;
+  if (!fromObject || !toObject) return;
+  const snapped = anchorPair(fromObject, toObject);
+  const currentPoint = handle.endpoint === 'from' ? snapped.from : snapped.to;
+  const fixedPoint = handle.endpoint === 'from' ? snapped.to : snapped.from;
+  const cameraNormal = new THREE.Vector3();
+  camera.getWorldDirection(cameraNormal);
+  dragPlane.setFromNormalAndCoplanarPoint(cameraNormal, currentPoint);
+  rewireState = {
+    connectionId: connection.id,
+    endpoint: handle.endpoint,
+    pointerId: event.pointerId,
+    previewPoint: currentPoint.clone(),
+    fixedPoint: fixedPoint.clone()
+  };
+  platformObjects.forEach(({ anchorGroup }) => { anchorGroup.visible = true; });
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(event.pointerId);
+  dom.toast.textContent = `Drag the ${handle.endpoint} endpoint onto a platform`;
+  dom.toast.classList.add('visible');
+  renderConnections();
+}
+
+function updateRewire(event) {
+  setPointerRay(event);
+  if (!raycaster.ray.intersectPlane(dragPlane, dragIntersection)) return;
+  rewireState.previewPoint.copy(dragIntersection);
+  const connection = data.connections.find((item) => item.id === rewireState.connectionId);
+  const targetId = platformFromPointer(event);
+  const otherId = rewireState.endpoint === 'from' ? connection?.to : connection?.from;
+  if (targetId && targetId !== otherId) {
+    const target = platformObjects.get(targetId)?.group;
+    if (target) rewireState.previewPoint.copy(closestAnchor(target, rewireState.fixedPoint).point);
+  }
+  renderConnections();
+}
+
+function endRewire(event) {
+  if (!rewireState || event.pointerId !== rewireState.pointerId) return false;
+  const connection = data.connections.find((item) => item.id === rewireState.connectionId);
+  const targetId = platformFromPointer(event);
+  const otherId = rewireState.endpoint === 'from' ? connection?.to : connection?.from;
+  if (connection && targetId && targetId !== otherId) connection[rewireState.endpoint] = targetId;
+  if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+  rewireState = null;
+  controls.enabled = true;
+  platformObjects.forEach(({ anchorGroup }) => { anchorGroup.visible = false; });
+  dom.toast.classList.remove('visible');
+  renderConnections();
+  updateInspector();
+  scheduleSave();
+  return true;
+}
+
 renderer.domElement.addEventListener('pointerdown', (event) => {
+  const handle = connectionHandleFromPointer(event);
+  if (handle) {
+    startRewire(event, handle);
+    return;
+  }
   const id = platformFromPointer(event);
   if (connectMode && id) {
     finishConnect(id);
     return;
   }
   if (!id) {
-    setSelected(null);
+    const connectionId = connectionFromPointer(event);
+    if (connectionId) setSelectedConnection(connectionId);
+    else setSelected(null);
     return;
   }
   setSelected(id);
@@ -455,6 +650,10 @@ renderer.domElement.addEventListener('pointerdown', (event) => {
 });
 
 renderer.domElement.addEventListener('pointermove', (event) => {
+  if (rewireState && event.pointerId === rewireState.pointerId) {
+    updateRewire(event);
+    return;
+  }
   if (!dragState || event.pointerId !== dragState.pointerId) return;
   const distance = Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY);
   if (distance > 3) dragState.moved = true;
@@ -474,6 +673,7 @@ renderer.domElement.addEventListener('pointermove', (event) => {
 });
 
 function endPlatformDrag(event) {
+  if (endRewire(event)) return;
   if (!dragState || event.pointerId !== dragState.pointerId) return;
   if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
   dragState = null;
@@ -501,6 +701,37 @@ dom.depth.addEventListener('change', (event) => {
   applyFilter();
 });
 dom.color.addEventListener('input', (event) => updateSelectedPlatform({ color: event.target.value }));
+dom.connectionLabel.addEventListener('input', (event) => {
+  const connection = data.connections.find((item) => item.id === selectedConnectionId);
+  if (!connection) return;
+  connection.label = event.target.value;
+  renderConnections();
+  scheduleSave();
+});
+dom.connectionFrom.addEventListener('change', (event) => {
+  const connection = data.connections.find((item) => item.id === selectedConnectionId);
+  if (!connection || event.target.value === connection.to) return renderConnectionInspector(connection);
+  connection.from = event.target.value;
+  renderConnections();
+  renderConnectionInspector(connection);
+  scheduleSave();
+});
+dom.connectionTo.addEventListener('change', (event) => {
+  const connection = data.connections.find((item) => item.id === selectedConnectionId);
+  if (!connection || event.target.value === connection.from) return renderConnectionInspector(connection);
+  connection.to = event.target.value;
+  renderConnections();
+  renderConnectionInspector(connection);
+  scheduleSave();
+});
+dom.deleteConnection.addEventListener('click', () => {
+  if (!selectedConnectionId) return;
+  data.connections = data.connections.filter((item) => item.id !== selectedConnectionId);
+  selectedConnectionId = null;
+  renderConnections();
+  updateInspector();
+  scheduleSave();
+});
 dom.filters.forEach((button) => button.addEventListener('click', () => {
   activeFilter = button.dataset.view;
   dom.filters.forEach((item) => item.classList.toggle('active', item === button));
@@ -524,7 +755,15 @@ window.addEventListener('keydown', (event) => {
     dom.toast.classList.remove('visible');
     platformObjects.forEach(({ anchorGroup }, id) => { anchorGroup.visible = id === selectedId; });
   }
+  if (event.key === 'Escape' && rewireState) {
+    rewireState = null;
+    controls.enabled = true;
+    platformObjects.forEach(({ anchorGroup }) => { anchorGroup.visible = false; });
+    dom.toast.classList.remove('visible');
+    renderConnections();
+  }
   if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) deleteSelected();
+  if ((event.key === 'Delete' || event.key === 'Backspace') && selectedConnectionId && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) dom.deleteConnection.click();
 });
 
 renderAll();

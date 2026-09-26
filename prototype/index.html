@@ -56,7 +56,7 @@
       <div class="canvas-wrap" id="canvas-wrap">
         <div class="canvas-toolbar" aria-label="Canvas tools">
           <button id="connect-platforms" type="button">Connect</button>
-          <span class="toolbar-hint" id="toolbar-hint">Drag to orbit · Scroll to zoom</span>
+          <span class="toolbar-hint" id="toolbar-hint">Drag empty space to orbit · Two-finger scroll to pan · Pinch to zoom</span>
         </div>
         <div id="scene" aria-label="Interactive spatial process map"></div>
         <div class="connect-toast" id="connect-toast" role="status" aria-live="polite"></div>
@@ -111,6 +111,34 @@
           </div>
 
           <button class="danger-button" id="delete-platform" type="button">Delete platform</button>
+        </form>
+
+        <form class="inspector-form" id="connection-form" hidden>
+          <div class="inspector-heading">
+            <span class="connection-swatch" aria-hidden="true">↗</span>
+            <div>
+              <p class="eyebrow">Selected connection</p>
+              <h2 id="selected-connection-title">Connection</h2>
+            </div>
+          </div>
+
+          <label>
+            <span>Label</span>
+            <input id="connection-label" name="connectionLabel" type="text" maxlength="48" placeholder="Describe this transition" autocomplete="off" />
+          </label>
+          <div class="connection-endpoints">
+            <label>
+              <span>From</span>
+              <select id="connection-from" name="connectionFrom"></select>
+            </label>
+            <span class="endpoint-arrow" aria-hidden="true">→</span>
+            <label>
+              <span>To</span>
+              <select id="connection-to" name="connectionTo"></select>
+            </label>
+          </div>
+          <p class="connection-help">Drag either endpoint handle on the canvas and drop it onto another platform.</p>
+          <button class="danger-button" id="delete-connection" type="button">Delete connection</button>
         </form>
       </aside>
     </section>
